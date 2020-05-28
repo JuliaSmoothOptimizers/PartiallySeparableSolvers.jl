@@ -89,8 +89,8 @@ end
 
 ges1 = solver_TR_PBFGS!(JuMP_mod)
 ges2 = solver_TR_PSR1!(JuMP_mod)
-ges3 = PartiallySeparableNLPModel.my_LBFGS(JuMP_mod)
-ges4 = PartiallySeparableNLPModel.my_LSR1(JuMP_mod)
+ges4 = my_LSR1(JuMP_mod)
+ges3 = my_LBFGS(JuMP_mod)
 
 ges = [ges1,ges2,ges3,ges4]
 MOI_gradient = Vector{typeof(x[1])}(undef,n)
