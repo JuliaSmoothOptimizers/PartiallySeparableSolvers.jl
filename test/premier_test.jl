@@ -89,8 +89,12 @@ end
 
 ges1 = solver_TR_PBFGS!(JuMP_mod)
 ges2 = solver_TR_PSR1!(JuMP_mod)
+ges3 = my_LBFGS(JuMP_mod)
+ges4 = my_LSR1(JuMP_mod)
 
-@test ges1.objective < 1e-5 && ges2.objective < 4
+@test ges1.objective < 1e-5 && ges2.objective < 4 && ges3.objective < 1e-5 && ges4.objective < 1e-4
+MathOptInterface.eval_objective_gradient(evaluator, MOI_gradient, ges2.solution)
+
 # MathOptInterface.eval_objective(evaluator, ges1.solution)
 # MathOptInterface.eval_objective(evaluator, ges2.solution)
 # MathOptInterface.eval_objective_gradient()
