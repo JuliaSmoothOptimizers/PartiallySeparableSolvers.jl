@@ -89,11 +89,25 @@ end
 
 ges1 = solver_TR_PBFGS!(JuMP_mod)
 ges2 = solver_TR_PSR1!(JuMP_mod)
-ges3 = my_LBFGS(JuMP_mod)
-ges4 = my_LSR1(JuMP_mod)
+ges3 = PartiallySeparableNLPModel.my_LBFGS(JuMP_mod)
+ges4 = PartiallySeparableNLPModel.my_LSR1(JuMP_mod)
+
+ges = [ges1,ges2,ges3,ges4]
+MOI_gradient = Vector{typeof(x[1])}(undef,n)
+ges_grad = []
+for i in ges
+    MathOptInterface.eval_objective_gradient(evaluator, MOI_gradient, i.solution)
+    push!(ges_grad, copy(MOI_gradient))
+end
+ges_nrm_grad = ( x -> norm(x)).(ges_grad)
+
+grad_init = Vector{typeof(x[1])}(undef,n)
+MathOptInterface.eval_objective_gradient(evaluator, grad_init, create_initial_point_Rosenbrock(n))
+check_nrm = (nrm_grad -> nrm_grad < 1e-6 * norm(grad_init) )
+
 
 @test ges1.objective < 1e-5 && ges2.objective < 4 && ges3.objective < 1e-5 && ges4.objective < 1e-4
-MathOptInterface.eval_objective_gradient(evaluator, MOI_gradient, ges2.solution)
+@test foldl( ( (x,y) -> x && y ), check_nrm.(ges_nrm_grad))
 
 # MathOptInterface.eval_objective(evaluator, ges1.solution)
 # MathOptInterface.eval_objective(evaluator, ges2.solution)

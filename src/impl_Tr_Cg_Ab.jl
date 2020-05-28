@@ -139,12 +139,11 @@ L-SR1 puis L-BFGS
 function solver_TR_CG_Ab_NLP_L_SR1(nlp :: AbstractNLPModel; x :: AbstractVector=copy(nlp.meta.x0), kwargs...)
     T = eltype(x)
     B = LSR1Operator(nlp.meta.nvar, scaling=true) :: LSR1Operator{T} #scaling=true
+    println("\n\n\n\tdébut L-SR1")
     return solver_TR_CG_Ab_NLP_LO_res(nlp, B;x=x, kwargs...)
 end
 
-function my_LSR1(nlp :: AbstractNLPModel;kwargs...)
-    solver_TR_CG_Ab_NLP_L_SR1(nlp;kwargs...)
-end
+my_LSR1(nlp :: AbstractNLPModel;kwargs...) = solver_TR_CG_Ab_NLP_L_SR1(nlp;kwargs...)
 
 
 
@@ -162,9 +161,8 @@ Une première partie sans paramètres nommés
 function solver_TR_CG_Ab_NLP_L_BFGS(nlp :: AbstractNLPModel; x :: AbstractVector=copy(nlp.meta.x0), kwargs...)
     T = eltype(x)
     B = LBFGSOperator(nlp.meta.nvar, scaling=true) :: LBFGSOperator{T} #scaling=true
+    println("\n\n\n\tdébut L-BFGS")
     return solver_TR_CG_Ab_NLP_LO_res(nlp, B;x=x, kwargs...)
 end
 
-function my_LBFGS(nlp :: AbstractNLPModel;kwargs...)
-    solver_TR_CG_Ab_NLP_L_BFGS(nlp;kwargs...)
-end
+my_LBFGS(nlp :: AbstractNLPModel;kwargs...) = solver_TR_CG_Ab_NLP_L_BFGS(nlp;kwargs...)

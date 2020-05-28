@@ -19,5 +19,5 @@ module PartiallySeparableSolvers
     include("impl_Tr_Cg_Ab.jl") # Définie les solvers LSR1 et LBFGS
 
     export solver_TR_PSR1!, solver_TR_PBFGS!
-    export LBFGS, LSR1
+    export my_LBFGS, my_LSR1
 end
