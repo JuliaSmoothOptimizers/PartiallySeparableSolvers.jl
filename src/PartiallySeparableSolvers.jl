@@ -16,7 +16,7 @@ module PartiallySeparableSolvers
 
     include("quasi_newton.jl") #définie les mises à jour BFGS/SR1 ainsi que leurs versions par morceaux
     include("PartitionnedSolvers.jl") #définie les solvers PSR1, PBFGS
-    include("impl_TR_Cg_Ab.jl") # Définie les solvers LSR1 et LBFGS
+    include("impl_Tr_Cg_Ab.jl") # Définie les solvers LSR1 et LBFGS
 
     export solver_TR_PSR1!, solver_TR_PBFGS!
     export LBFGS, LSR1
