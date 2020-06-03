@@ -113,14 +113,22 @@ end
 MISE EN FORME DES RESULTATS
 =#
 
-function solver_TR_CG_Ab_NLP_LO_res(nlp :: AbstractNLPModel, B :: AbstractLinearOperator{T}; kwargs...) where T <: Number
-    Δt = @timed ((x_final,cpt) = solver_TR_CG_Ab_NLP_LO(nlp, B; kwargs...))
-    status= :unknown
+function solver_TR_CG_Ab_NLP_LO_res(nlp :: AbstractNLPModel, B :: AbstractLinearOperator{T}; max_eval :: Int=10000, kwargs...) where T <: Number
+    Δt = @timed ((x_final,cpt) = solver_TR_CG_Ab_NLP_LO(nlp, B; max_eval=max_eval, kwargs...))
+    x_init = nlp.meta.x0
+    nrm_grad = norm(NLPModels.grad(nlp, x_final),2)
+    nrm_grad_init = norm(NLPModels.grad(nlp, x_init),2)
+    if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
+        status = :first_order
+    elseif cpt >= max_eval
+        status = :max_eval
+    else
+        status = :unknown
+    end
     return GenericExecutionStats(status, nlp,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!
-                           primal_feas = norm(NLPModels.grad(nlp, x_final),2),
-                           dual_feas = -1,
+                           dual_feas = nrm_grad,
                            objective = NLPModels.obj(nlp, x_final),
                            elapsed_time = Δt[2],
                           )

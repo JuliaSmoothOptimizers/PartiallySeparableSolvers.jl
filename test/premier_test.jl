@@ -36,6 +36,11 @@ Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj,
 
 JuMP_mod = MathOptNLPModel(m_ros, name="Ros "*string(n))
 
+
+
+
+
+
 x = create_initial_point_Rosenbrock(n)
 σ = 1e-5
 
@@ -87,8 +92,12 @@ end
 # PartiallySeparableSolvers.solver_TR_PBFGS!(obj, n, x)
 # PartiallySeparableSolvers.solver_TR_PBFGS!(obj_expr_tree, n, x)
 
-ges1 = solver_TR_PBFGS!(JuMP_mod)
-ges2 = solver_TR_PSR1!(JuMP_mod)
+
+ges2 = PSR1(JuMP_mod)
+@show ges2.status
+
+error("fin test")
+ges1 = PBFGS(JuMP_mod)
 ges4 = my_LSR1(JuMP_mod)
 ges3 = my_LBFGS(JuMP_mod)
 

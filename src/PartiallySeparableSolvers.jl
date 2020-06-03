@@ -19,7 +19,7 @@ module PartiallySeparableSolvers
     include("impl_Tr_Cg_Ab.jl") # Définie les solvers LSR1 et LBFGS
 
     PBFGS(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PBFGS!(m; kwargs... )
-    PSR1(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PBFGS!(m; kwargs... )
+    PSR1(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PSR1!(m; kwargs... )
 
 
     export PBFGS, PSR1
