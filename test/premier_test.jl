@@ -94,9 +94,6 @@ end
 
 
 ges2 = PSR1(JuMP_mod)
-@show ges2.status
-
-error("fin test")
 ges1 = PBFGS(JuMP_mod)
 ges4 = my_LSR1(JuMP_mod)
 ges3 = my_LBFGS(JuMP_mod)
