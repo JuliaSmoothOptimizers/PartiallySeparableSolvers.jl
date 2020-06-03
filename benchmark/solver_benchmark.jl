@@ -36,8 +36,8 @@ function create_Rosenbrock_JuMP_Model(n :: Int)
 end
 
 
-# n = [100,200,500,1000,2000,5000]
-n = [10,20,30]
+n = [100,200,500,1000,2000,5000]
+# n = [10,20,30]
 # n = [500,1000,2000,4000]
 problems = create_Rosenbrock_JuMP_Model.(n)
 nlp_problems = MathOptNLPModel.([p[1] for p in problems])
