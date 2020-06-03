@@ -6,7 +6,6 @@ using Plots
 
 commit = benchmarkpkg("PartiallySeparableSolvers",script="benchmark/solver_benchmark.jl")  #dernier commit sur la branche sur laquelle on se trouve
 master = benchmarkpkg("PartiallySeparableSolvers", "master", script="benchmark/solver_benchmark.jl") # branche masterjudgement_solver = judge(master_solver, commit_solver)
-# judgement = judge("PartiallySeparableStructure", "master")
 judgement_solver = judge(master, commit)
 
 export_markdown("benchmark/judgement_solver.md", judgement_solver)
