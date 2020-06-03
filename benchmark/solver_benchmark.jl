@@ -58,6 +58,7 @@ for i in 1:length(problems)
   max_time = 300.0
   max_eval = 5000
   (m_ros, evaluator, obj_ros) = problems[i]
+  n = m_ros.moi_backend.model_cache.model.num_variables_created
   prob = nlp_problems[i]
   LSR1_prob = NLPModels.LSR1Model(prob)
 
