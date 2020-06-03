@@ -11,4 +11,4 @@ judgement_solver = judge(master, commit)
 export_markdown("benchmark/judgement_solver.md", judgement_solver)
 ENV["GKSwstype"]=100
 p = SolverBenchmark.profile_solvers(commit)
-savefig(p, "benchmark/profile_solver.ppdf)
+savefig(p, "benchmark/profile_solver.pdf)
