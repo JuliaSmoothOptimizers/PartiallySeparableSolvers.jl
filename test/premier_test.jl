@@ -1,5 +1,5 @@
-using JuMP, MathOptInterface, NLPModelsJuMP, LinearAlgebra, SparseArrays
-using CalculusTreeTools, PartiallySeparableNLPModel
+using JuMP, MathOptInterface, NLPModelsJuMP, LinearAlgebra, SparseArrays, Test
+using CalculusTreeTools, PartiallySeparableNLPModel, PartiallySeparableSolvers
 
 function create_initial_point_Rosenbrock(n)
     point_initial = Vector{Float64}(undef, n)
@@ -118,3 +118,10 @@ check_nrm = (nrm_grad -> nrm_grad < 1e-6 * norm(grad_init) )
 # MathOptInterface.eval_objective(evaluator, ges1.solution)
 # MathOptInterface.eval_objective(evaluator, ges2.solution)
 # MathOptInterface.eval_objective_gradient()
+
+# println("fin des test classique éxécution à 25k var")
+#
+# n = 25000
+# (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
+# JuMP_mod = MathOptNLPModel(m_ros, name="Ros "*string(n))
+# @time PBFGS(JuMP_mod)
