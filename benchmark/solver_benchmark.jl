@@ -50,6 +50,7 @@ SUITE["L-BFGS"] = BenchmarkGroup()
 SUITE["L-SR1"] = BenchmarkGroup()
 SUITE["P-SR1"] = BenchmarkGroup()
 SUITE["P-BFGS"] = BenchmarkGroup()
+SUITE["P-BS"] = BenchmarkGroup()
 
 for i in 1:length(problems)
 
@@ -70,5 +71,6 @@ for i in 1:length(problems)
   SUITE["ros $n var"]["L-SR1"] = @benchmarkable $(PartiallySeparableSolvers.my_LSR1)($prob)
   SUITE["ros $n var"]["P-BFGS"] = @benchmarkable $(PartiallySeparableSolvers.PBFGS)($prob)
   SUITE["ros $n var"]["P-SR1"] = @benchmarkable $(PartiallySeparableSolvers.PSR1)($prob)
+  SUITE["ros $n var"]["P-BS"] = @benchmarkable $(PartiallySeparableSolvers.PBS)($prob)
 
 end
