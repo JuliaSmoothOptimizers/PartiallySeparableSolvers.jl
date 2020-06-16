@@ -100,10 +100,12 @@ function solver_TR_CG_Ab_NLP_LO(nlp :: AbstractNLPModel, B :: AbstractLinearOper
         println("\n\n\nNous nous somme arrêté grâce à un point stationnaire !!!\n\n\n")
         println("cpt,\tf_xk,\tnorm de g,\trayon puis x en dessous ")
         @printf "%3d %8.1e %7.1e %7.1e  \n" cpt f_xk norm(g,2) Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
     else
         println("\n\n\nNous nous sommes arrêté à cause du nombre d'itération max \n\n\n ")
         println("cpt,\tf_xk,\tnorm de g,\trayon puis x en dessous ")
         @printf "%3d %8.1e %7.1e %7.1e  \n" cpt f_xk norm(g,2) Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
     end
 
     return (x, cpt)

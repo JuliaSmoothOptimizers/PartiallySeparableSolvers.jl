@@ -36,10 +36,12 @@ the vectors to store the points xₖ and xₖ₋₁, some constants Δ, η... an
 function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where T
 
     # détéction de la structure partiellement séparable
-    sps = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj,n) :: PartiallySeparableNLPModel.SPS{T}
+    sps = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj,n)
+    # sps = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj,n) :: PartiallySeparableNLPModel.SPS{T}
 
+    # @show sps
     # construction des structure de données nécessaire pour le gradient à l'itération k/k+1 et le différence des gradients
-    construct_element_grad = (y :: PartiallySeparableNLPModel.element_function{T} -> PartiallySeparableNLPModel.element_gradient{type}(Vector{type}(zeros(type, length(y.used_variable)) )) )
+    construct_element_grad = (y :: PartiallySeparableNLPModel.element_function{} -> PartiallySeparableNLPModel.element_gradient{type}(Vector{type}(zeros(type, length(y.used_variable)) )) )
     g_k = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
     g_k1 = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
     g = Vector{PartiallySeparableNLPModel.grad_vector{type}}([g_k,g_k1])
@@ -48,7 +50,7 @@ function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where 
     grad = Vector{type}(undef, n)
 
     # constructions des structures de données nécessaires pour le Hessien ou son approximation
-    construct_element_hess = ( elm_fun :: PartiallySeparableNLPModel.element_function{T} -> PartiallySeparableNLPModel.element_hessian{type}( Array{type,2}(undef, length(elm_fun.used_variable), length(elm_fun.used_variable) )) )
+    construct_element_hess = ( elm_fun :: PartiallySeparableNLPModel.element_function{} -> PartiallySeparableNLPModel.element_hessian{type}( Array{type,2}(undef, length(elm_fun.used_variable), length(elm_fun.used_variable) )) )
     B_k = PartiallySeparableNLPModel.Hess_matrix{type}(construct_element_hess.(sps.structure))
     B_k1 = PartiallySeparableNLPModel.Hess_matrix{type}(construct_element_hess.(sps.structure))
     B = Vector{PartiallySeparableNLPModel.Hess_matrix{type}}([B_k, B_k1])
@@ -71,15 +73,15 @@ function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where 
 
     # allocation de la structure de donné contenant tout ce dont nous avons besoin pour l'algorithme
     # algo_struct = struct_algo(sps, (B_k, B_k1), (g_k, g_k1), grad_k, y, grad_y, (x_k, x_k1), (type)(0), (type)(0), fst) :: struct_algo{T, type}
-    algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ) :: struct_algo{T, type}
+    # algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ) :: struct_algo{T, type}
+    # return algo_struct :: struct_algo{T, type}
 
-    return algo_struct :: struct_algo{T, type}
+    algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ)
+    return algo_struct
 end
 
 
-function init_gradient_compiled_reverse()
 
-end
 
 """
 init_struct_algo(struct_algo, x )
@@ -229,10 +231,12 @@ function iterations_TR_PSR1!(s_a :: struct_algo{T,Y};
         println("\n\n\nNous nous somme arrêté grâce à un point stationnaire PSR1 !!!")
         println("cpt,\tf_xk,\tnorm de g,\trayon puis x en dessous ")
         @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n\n\n" cpt s_a.tpl_f[Int(s_a.index)]  norm(s_a.grad,2) s_a.Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
     else
         println("\n\n\nNous nous sommes arrêté à cause du nombre d'itération max PSR1")
         println("cpt,\tf_xk,\tnorm de g,\trayon ")
         @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n\n\n" cpt s_a.tpl_f[Int(s_a.index)]  norm(s_a.grad,2) s_a.Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
     end
 
     return cpt
@@ -392,10 +396,12 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y};
         println("\n\n\nNous nous somme arrêté grâce à un point stationnaire PBFGS !!!")
         println("cpt,\tf_xk,\tnorm de g,\trayon puis x en dessous ")
         @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n\n\n" cpt s_a.tpl_f[Int(s_a.index)]  norm(s_a.grad,2) s_a.Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
     else
         println("\n\n\nNous nous sommes arrêté à cause du nombre d'itération max PBFGS")
         println("cpt,\tf_xk,\tnorm de g,\trayon ")
         @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n\n\n" cpt s_a.tpl_f[Int(s_a.index)]  norm(s_a.grad,2) s_a.Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
     end
 
     return cpt
@@ -460,4 +466,155 @@ function _solver_TR_PBFGS!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP
     n = model.moi_backend.model_cache.model.num_variables_created
     T2 = eltype(x)
     _solver_TR_PBFGS_2!(model_JUMP, obj_Expr, n, T2, x; kwargs...)
+end
+
+
+
+#=
+FIN DE P-BFGS
+---------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------
+P-BS
+=#
+
+
+"""
+    update_PBS!(struct_algo, B)
+This function perform a step of a Trust-Region method using a conjuguate-gragient method to solve the sub-problem of the Trust-Region.
+B is the LinearOperator needed by the cg (conjuguate-gragient method). struct_algo stored all the data relative to the problem and is modified if step is taken .
+"""
+function update_PBS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
+    atol :: Real=√eps(s_a.tpl_x[Int(s_a.index)]),
+    rtol :: Real=√eps(s_a.tpl_x[Int(s_a.index)]),
+    kwawrgs...
+    ) where T where Y <: Number
+
+    n = s_a.sps.n_var
+    (s_k, info) = Krylov.cg(B, - s_a.grad,atol=atol, rtol=rtol, radius = s_a.Δ, itmax=max(2 * n, 50)) :: Tuple{Array{Y,1},Krylov.SimpleStats{Y}}
+    (ρₖ, fxₖ₊₁) = compute_ratio(s_a, s_k :: Vector{Y})
+    if ρₖ > s_a.η #= on accepte le nouveau point =#
+        s_a.index = other_index(s_a)
+        s_a.tpl_f[Int(s_a.index)] = fxₖ₊₁
+        s_a.tpl_x[Int(s_a.index)] = s_a.tpl_x[Int(other_index(s_a))] + s_k
+
+        PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
+        PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
+        PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+
+        update_SPS_mix_SR1_BFGS!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
+    else #= println("changement par référence, la structure ne bouge donc pas") =#
+    end
+
+    if ρₖ >= s_a.η₁
+        if norm(s_k) < 0.8 * s_a.Δ #= le rayon ne bouge pas les conditions sur la norme ne sont pas satisfaites =#
+            s_a.Δ = s_a.Δ
+        else   #= le rayon augmenter=#
+            s_a.Δ = s_a.Δ * 2
+        end
+    elseif ρₖ <= s_a.η  #=le rayon diminue=#
+        s_a.Δ = 1/2 * s_a.Δ
+    else  #= cas ou nous faisons ni une bonne ni une mauvais approximation=#
+        s_a.Δ = s_a.Δ
+    end
+end
+
+
+#fonction traitant le coeur de l'algorithme, réalise principalement la boucle qui incrémente un compteur et met à jour la structure d'algo par effet de bord
+# De plus on effectue tous les affichage par itération dans cette fonction raison des printf
+iterations_TR_PBS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}; kwargs...) where T where Y <: Number = (vec_cpt[1] = iterations_TR_PBS!(s_a; kwargs...))
+function iterations_TR_PBS!(s_a :: struct_algo{T,Y};
+        max_eval :: Int=10000,
+        atol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
+        rtol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
+        kwargs... )  where T where Y <: Number
+
+    cpt = 1 :: Int64
+    n = s_a.sps.n_var
+
+    T2 = eltype(s_a.tpl_x[Int(s_a.index)])
+    ∇f₀ = s_a.grad
+    ∇fNorm2 = nrm2(n, ∇f₀)
+    cgtol = one(T2)  # Must be ≤ 1.
+    cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
+
+    opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+    @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
+
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  cpt < max_eval )
+        update_PBS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
+        cpt = cpt + 1
+        if mod(cpt,500) == 0
+            @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
+        end
+
+    end
+
+    if cpt < max_eval
+        println("\n\n\nNous nous somme arrêté grâce à un point stationnaire PBS !!!")
+        println("cpt,\tf_xk,\tnorm de g,\trayon puis x en dessous ")
+        @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n\n\n" cpt s_a.tpl_f[Int(s_a.index)]  norm(s_a.grad,2) s_a.Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
+    else
+        println("\n\n\nNous nous sommes arrêté à cause du nombre d'itération max PBS")
+        println("cpt,\tf_xk,\tnorm de g,\trayon ")
+        @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n\n\n" cpt s_a.tpl_f[Int(s_a.index)]  norm(s_a.grad,2) s_a.Δ
+        println("---------------------------------------------------------------------------------------------------------\n\n\n")
+    end
+
+    return cpt
+end
+
+
+solver_TR_PBS!(m :: T;  kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBS!(m; kwargs... )
+solver_TR_PBS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType ; kwargs...) where T where Y <: Number = _solver_TR_PBS!(obj_Expr, n, x_init, type; kwargs...)
+function _solver_TR_PBS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number
+    temp_tree = CalculusTreeTools.transform_to_expr_tree(obj_Expr)
+    work_obj = CalculusTreeTools.create_complete_tree(temp_tree)
+    s_a = alloc_struct_algo(work_obj, n :: Int, type :: DataType )
+    init_struct_algo!(s_a, x_init)
+    pointer_cpt = Array{Int}([0])
+    # try
+        cpt = iterations_TR_PBS!(s_a, pointer_cpt; kwargs...)
+    # catch e
+    #     @show e
+    #     return (zeros(n),s_a,-1)
+    # end
+    cpt = pointer_cpt[1]
+    x_final = s_a.tpl_x[Int(s_a.index)]
+    return (x_final, s_a, cpt) :: Tuple{Vector{Y}, struct_algo, Int}
+end
+
+
+function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y}; max_eval :: Int=10000, kwargs...) where T where Y where Z <: AbstractNLPModel
+    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBS!(obj_Expr, n, x_init, type; kwargs...))
+    nrm_grad = norm(NLPModels.grad(m, x_final),2)
+    nrm_grad_init = norm(NLPModels.grad(m, x_init),2)
+    if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
+        status = :first_order
+    elseif cpt >= max_eval
+        status = :max_eval
+    else
+        status = :unknown
+    end
+    return GenericExecutionStats(status, m,
+                           solution = x_final,
+                           iter = cpt,  # not quite the number of iterations!
+                           dual_feas = nrm_grad,
+                           objective = NLPModels.obj(m, x_final),
+                           elapsed_time = Δt[2],
+                          )
+end
+
+
+function _solver_TR_PBS!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.meta.x0), kwargs...) where T <: AbstractNLPModel where Y <: Number
+    model = model_JUMP.eval.m
+    evaluator = JuMP.NLPEvaluator(model)
+    MathOptInterface.initialize(evaluator, [:ExprGraph])
+    obj_Expr = MathOptInterface.objective_expr(evaluator) :: Expr
+    n = model.moi_backend.model_cache.model.num_variables_created
+    T2 = eltype(x)
+    _solver_TR_PBS_2!(model_JUMP, obj_Expr, n, T2, x; kwargs...)
 end

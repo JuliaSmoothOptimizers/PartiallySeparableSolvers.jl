@@ -29,7 +29,7 @@ function create_Rosenbrock_JuMP_Model(n :: Int)
 end
 
 
-n = 100
+n = 1000
 (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
 obj_expr_tree = CalculusTreeTools.transform_to_expr_tree(obj)
 Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj, n)
@@ -97,6 +97,7 @@ ges2 = PSR1(JuMP_mod)
 ges1 = PBFGS(JuMP_mod)
 ges4 = my_LSR1(JuMP_mod)
 ges3 = my_LBFGS(JuMP_mod)
+ges5 = PBS(JuMP_mod)
 
 ges = [ges1,ges2,ges3,ges4]
 MOI_gradient = Vector{typeof(x[1])}(undef,n)

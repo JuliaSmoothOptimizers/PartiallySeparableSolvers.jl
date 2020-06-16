@@ -110,3 +110,33 @@ the update, we need the grad_vector y and the vector s. B, B_1 and y use structu
             update_BFGS!(s_elem, y_elem, B_elem, B_elem_1)
         end
     end
+
+
+
+    """
+        update_SPS_mix_SR1_BFGS(sps, Bₖ, Bₖ₊₁, yₖ, sₖ)
+    The update is based on the grad_vector y and the vector s. B, B_1 and y use structure linked with the partially separable structure stored in sps.
+    We update the Hessian approximation Bₖ according with partially separable structure. We update each Bᵢₖ,if it is convex we use
+    BFGS rather than SR1.
+    """
+    function update_SPS_mix_SR1_BFGS!(sps :: PartiallySeparableNLPModel.SPS{T},
+                                      B :: PartiallySeparableNLPModel.Hess_matrix{Y},
+                                      B_1 :: PartiallySeparableNLPModel.Hess_matrix{Y},
+                                      y :: PartiallySeparableNLPModel.grad_vector{Y},
+                                      s :: AbstractVector{Y}) where T where Y <: Number
+    l_elmt_fun = length(sps.structure)
+     # @Threads.threads for i in 1:l_elmt_fun
+    for i in 1:l_elmt_fun
+        elmt_fun = sps.structure[i]
+        status = PartiallySeparableNLPModel.get_convexity_status(elmt_fun)
+        @inbounds s_elem = Array(view(s, elmt_fun.used_variable))
+        @inbounds y_elem = y.arr[i].g_i
+        @inbounds B_elem = B.arr[i].elmt_hess
+        @inbounds B_elem_1 = B_1.arr[i].elmt_hess
+        if CalculusTreeTools.is_convex(status)
+            update_BFGS!(s_elem, y_elem, B_elem, B_elem_1)
+        else
+            update_SR1!(s_elem, y_elem, B_elem, B_elem_1)
+        end
+    end
+end
