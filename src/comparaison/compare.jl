@@ -7,7 +7,7 @@ include( repo_model * "generalisation_Brown.jl")
 
 
 
-using JSOSolvers, SolverBenchmark, SolverTools, Plots
+using JSOSolvers, SolverBenchmark, SolverTools, Plots, Printf
 
 using PartiallySeparableSolvers
 
@@ -35,10 +35,11 @@ end
 
 
 println(" \n\n génération des problemes")
-# n_array = [100,500,1000,2000,5000]
-n_array = [10,20,30]
+n_array = [100,500,1000,2000,5000,10000,20000]
+# n_array = [10,20,30]
 # n_array = [1000,2000]
 # n_array = [100,200]
+# n_array = [100,500,1000,2000]
 problems = create_all_problems(n_array)
 
 
@@ -52,7 +53,8 @@ solver = Dict{Symbol,Function}(
   :my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
   :my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
   :p_bfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
-  :p_sr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...))
+  :p_sr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
+  :p_bs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...))
 )
 
 const atol = 1.0e-5
@@ -64,7 +66,6 @@ const max_time = 300.0
 println("lancement des benchmmarks")
 
 stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = 5000, atol=atol, rtol=rtol)
-keys_solver = keys(stats)
 
 println("affichage du profile des solvers par rapport au problèmes")
 # performance_profile(stats, df->df.elapsed_time)
@@ -73,24 +74,37 @@ println("affichage du profile des solvers par rapport au problèmes")
 println("affichage des tables")
 markdown_table(stdout, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
 markdown_table(stdout, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
 markdown_table(stdout, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(stdout, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(stdout, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(stdout, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(stdout, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
 
 
 
 
-error("fin")
+# error("fin")
 #= Ecriture des résultats dans un fichier au format markdown=#
 println("écriture des résultats markdown")
 location_md = string("src/comparaison/results/result_bench_md.txt")
 io = open(location_md,"w")
 close(io)
 io = open(location_md,"w+")
-for i in keys_solver
-  markdown_table(io, stats[i], cols=[ :name, :nvar, :elapsed_time, :iter, :status, :objective, :neval_obj, :neval_grad ])
-end
+println(io, "\n\n\nTrunk" )
+markdown_table(io, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nTrunk LSR1" )
+markdown_table(io, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nMon LSR1" )
+markdown_table(io, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nMon LBFGS" )
+markdown_table(io, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nPBFGS" )
+markdown_table(io, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nPSR1" )
+markdown_table(io, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nPBS" )
+markdown_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+
 close(io)
 
 
@@ -100,9 +114,20 @@ location_latex = string("src/comparaison/results/result_bench_latex.txt")
 io = open(location_latex,"w")
 close(io)
 io = open(location_latex,"w+")
-for i in keys_solver
-  latex_table(io, stats[i], cols=[ :name, :nvar, :elapsed_time, :iter, :status, :objective, :neval_obj, :neval_grad ])
-end
+println(io, "\n\n\nTrunk" )
+latex_table(io, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nTrunk LSR1" )
+latex_table(io, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nMon LSR1" )
+latex_table(io, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nMon LBFGS" )
+latex_table(io, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nPBFGS" )
+latex_table(io, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nPSR1" )
+latex_table(io, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+println(io, "\n\n\nPBS" )
+latex_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
 close(io)
 
 
