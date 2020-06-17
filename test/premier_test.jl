@@ -29,7 +29,7 @@ function create_Rosenbrock_JuMP_Model(n :: Int)
 end
 
 
-n = 1000
+n = 100
 (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
 obj_expr_tree = CalculusTreeTools.transform_to_expr_tree(obj)
 Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj, n)

@@ -25,6 +25,8 @@ mutable struct struct_algo{T,Y <: Number}
     η₁ :: Float64
     ϵ :: Float64
 
+    n_eval_obj :: Int
+    n_eval_grad :: Int
 end
 
 
@@ -71,12 +73,15 @@ function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where 
     η₁ =  0.75
     ϵ = 1e-6
 
+    n_eval_obj = 0
+    n_eval_grad = 0
+
     # allocation de la structure de donné contenant tout ce dont nous avons besoin pour l'algorithme
     # algo_struct = struct_algo(sps, (B_k, B_k1), (g_k, g_k1), grad_k, y, grad_y, (x_k, x_k1), (type)(0), (type)(0), fst) :: struct_algo{T, type}
     # algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ) :: struct_algo{T, type}
     # return algo_struct :: struct_algo{T, type}
 
-    algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ)
+    algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ, n_eval_obj, n_eval_grad)
     return algo_struct
 end
 
@@ -97,11 +102,13 @@ function init_struct_algo!( s_a :: struct_algo{T,Y},
 
     PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
     PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
+    s_a.n_eval_grad += 1
 
     # PartiallySeparableNLPModel.struct_hessian!(s_a.sps, s_a.x_k, s_a.B_k)
     PartiallySeparableNLPModel.id_hessian!(s_a.sps, s_a.tpl_B[Int(s_a.index)])
 
     s_a.tpl_f[Int(s_a.index)] = PartiallySeparableNLPModel.evaluate_SPS(s_a.sps, s_a.tpl_x[Int(s_a.index)])
+    s_a.n_eval_obj += 1
 
 end
 
@@ -136,6 +143,7 @@ Compute the ratio :   (fₖ - fₖ₊₁)/(mₖ(0)-mₖ(sₖ)) , all the data ab
 function compute_ratio(s_a :: struct_algo{T,Y}, s_k :: AbstractVector{Y}) where T where Y <: Number
     fxₖ = s_a.tpl_f[Int(s_a.index)] :: Y
     fxₖ₊₁ = PartiallySeparableNLPModel.evaluate_SPS(s_a.sps, s_a.tpl_x[Int(s_a.index)] + s_k) :: Y
+    s_a.n_eval_obj += 1
     quadratic_approximation = approx_quad(s_a, s_k) :: Y
     num = fxₖ - fxₖ₊₁ :: Y
     den = fxₖ - quadratic_approximation :: Y
@@ -178,6 +186,7 @@ function update_PSR1!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
         PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
         PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+        s_a.n_eval_grad += 1
 
         update_SPS_SR1!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
     else #= println("changement par référence, la structure ne bouge donc pas") =#
@@ -218,7 +227,7 @@ function iterations_TR_PSR1!(s_a :: struct_algo{T,Y};
     opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
 
-    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  cpt < max_eval )
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval )
         update_PSR1!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
         if mod(cpt,500) == 0
@@ -287,6 +296,8 @@ function _solver_TR_PSR1_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_
     else
         status = :unknown
     end
+    m.counters.neval_obj = s_a.n_eval_obj
+    m.counters.neval_grad = s_a.n_eval_grad
     return GenericExecutionStats(status, m,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!
@@ -343,6 +354,7 @@ function update_PBGS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
         PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
         PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+        s_a.n_eval_grad += 1
 
         update_SPS_BFGS!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
     else #= println("changement par référence, la structure ne bouge donc pas") =#
@@ -383,7 +395,7 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y};
     opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
-    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  cpt < max_eval )
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval )
         update_PBGS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
         if mod(cpt,500) == 0
@@ -448,6 +460,8 @@ function _solver_TR_PBFGS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x
     else
         status = :unknown
     end
+    m.counters.neval_obj = s_a.n_eval_obj
+    m.counters.neval_grad = s_a.n_eval_grad
     return GenericExecutionStats(status, m,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!
@@ -503,6 +517,7 @@ function update_PBS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
         PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
         PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+        s_a.n_eval_grad += 1
 
         update_SPS_mix_SR1_BFGS!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
     else #= println("changement par référence, la structure ne bouge donc pas") =#
@@ -543,7 +558,7 @@ function iterations_TR_PBS!(s_a :: struct_algo{T,Y};
     opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
-    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  cpt < max_eval )
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval )
         update_PBS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
         if mod(cpt,500) == 0
@@ -599,6 +614,8 @@ function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_i
     else
         status = :unknown
     end
+    m.counters.neval_obj = s_a.n_eval_obj
+    m.counters.neval_grad = s_a.n_eval_grad
     return GenericExecutionStats(status, m,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!

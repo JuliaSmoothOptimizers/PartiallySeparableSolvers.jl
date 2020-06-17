@@ -7,7 +7,7 @@ include( repo_model * "generalisation_Brown.jl")
 
 
 
-using JSOSolvers, SolverBenchmark, SolverTools, Plots, Printf
+using JSOSolvers, SolverBenchmark, SolverTools, Plots, Printf, DataFrames
 
 using PartiallySeparableSolvers
 
@@ -34,15 +34,62 @@ function create_all_problems(nb_var_array :: Vector{Int})
 end
 
 
+first_criteria(n, n_obj, n_grad, n_hess) = n_obj + n*n_grad + n *n_hess
+function my_criteria_timeless(d :: DataFrames.DataFrame)
+    nvar = d.nvar
+    n_eval_obj = d.neval_obj
+    n_eval_grad = d.neval_grad
+    n_eval_hprod = d.neval_hprod
+    my_criteria = []
+    for i in 1:length(nvar)
+      push!(my_criteria, first_criteria(nvar[i], n_eval_obj[i], n_eval_grad[i], n_eval_hprod[i]))
+    end
+    d.first_criteria = my_criteria
+end
+
+second_criteria(n, time, n_obj, n_grad, n_hess) = time / (n_obj + n*n_grad + n*n_hess)
+function my_criteria_time(d :: DataFrames.DataFrame)
+    nvar = d.nvar
+    iter = d.iter
+    n_eval_obj = d.neval_obj
+    n_eval_grad = d.neval_grad
+    n_eval_hprod = d.neval_hprod
+    elapsed_time = d.elapsed_time
+    my_criteria = []
+    for i in 1:length(nvar)
+      push!(my_criteria, second_criteria(nvar[i], elapsed_time[i], n_eval_obj[i], n_eval_grad[i], n_eval_hprod[i]))
+    end
+    d.second_criteria = my_criteria
+end
+
+
+third_criteria(n_obj, n_grad) = (n_grad/n_obj)*100
+function acceptance_criteria(d :: DataFrames.DataFrame)
+  n_eval_obj = d.neval_obj
+  n_eval_grad = d.neval_grad
+  my_criteria = []
+  for i in 1:length(n_eval_obj)
+    push!(my_criteria, third_criteria(n_eval_obj[i], n_eval_grad[i]))
+  end
+  d.third_criteria = my_criteria
+end
+
+
+# stats[:trunk].champ = []
+# markdown_table(stdout, stats[:trunk], cols=[champ])
+
+
+
+
 println(" \n\n génération des problemes")
-n_array = [100,500,1000,2000,5000,10000,20000]
+# n_array = [100,500,1000,2000,5000,10000,20000]
 # n_array = [10,20,30]
 # n_array = [1000,2000]
 # n_array = [100,200]
-# n_array = [100,500,1000,2000]
+n_array = [100,500,1000,2000,5000]
 problems = create_all_problems(n_array)
 
-
+# error("")
 
 println("\n\ndéfinition des solver\n\n")
 
@@ -70,18 +117,25 @@ stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = 5000, atol
 println("affichage du profile des solvers par rapport au problèmes")
 # performance_profile(stats, df->df.elapsed_time)
 # performance_profile(stats, df->df.iter)
+keys_stats = keys(stats)
+for i in keys_stats
+  my_criteria_timeless(stats[i])
+  my_criteria_time(stats[i])
+  acceptance_criteria(stats[i])
+end
 
 println("affichage des tables")
-markdown_table(stdout, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
-markdown_table(stdout, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(stdout, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+markdown_table(stdout, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+markdown_table(stdout, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+markdown_table(stdout, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+markdown_table(stdout, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+markdown_table(stdout, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+markdown_table(stdout, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 
 
-
+# stats[:trunk].champ = []
+# markdown_table(stdout, stats[:trunk], cols=[champ])
 
 # error("fin")
 #= Ecriture des résultats dans un fichier au format markdown=#
@@ -91,19 +145,19 @@ io = open(location_md,"w")
 close(io)
 io = open(location_md,"w+")
 println(io, "\n\n\nTrunk" )
-markdown_table(io, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nTrunk LSR1" )
-markdown_table(io, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nMon LSR1" )
-markdown_table(io, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nMon LBFGS" )
-markdown_table(io, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nPBFGS" )
-markdown_table(io, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:p_bfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nPSR1" )
-markdown_table(io, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:p_sr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nPBS" )
-markdown_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+markdown_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 
 close(io)
 
@@ -115,67 +169,17 @@ io = open(location_latex,"w")
 close(io)
 io = open(location_latex,"w+")
 println(io, "\n\n\nTrunk" )
-latex_table(io, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:trunk], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nTrunk LSR1" )
-latex_table(io, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:trunk_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nMon LSR1" )
-latex_table(io, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:my_lsr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nMon LBFGS" )
-latex_table(io, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:my_lbfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nPBFGS" )
-latex_table(io, stats[:p_bfgs], cols=[ :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:p_bfgs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nPSR1" )
-latex_table(io, stats[:p_sr1], cols=[  :name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:p_sr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 println(io, "\n\n\nPBS" )
-latex_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad ])
+latex_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 close(io)
-
-
-
-
-
-
-
-
-
-
-#= non nécessaire actuellement, faisant office de test pour les dictionnaires et la création de fichier de résultat=#
-#=
-prob_name_file = Dict{Symbol,String}(
-        :rosenbrock => "Rosenbrock",
-        :chained_wood => "Chained_Wood",
-        :chained_Powel => "Chained_Powel",
-        :chained_Cragg_Levis => "Chained_Cragg_Levis",
-        )
-
-solver_name = Dict{Symbol,String}(
-        :psr1 => "P-SR1",
-        :trunk => "Trunk",
-        :trunk_lsr1 => "Trunk_LSR1",
-        :lsr1 => "L-SR1",
-        :lbfgs => "L-BFGS",
-        :pbfgs => "P-BFGS",
-        )
-
-solver_function = Dict{Symbol,String}(
-        :psr1 => "P-SR1",
-        :trunk => "Trunk",
-        :trunk_lsr1 => "Trunk_LSR1",
-        :lsr1 => "L-SR1",
-        :lbfgs => "L-BFGS",
-        :pbfgs => "P-BFGS",
-        )
-
-function open_close_all_result_file(prob_name_file, solver_name)
-  for (k_prob, name_prob) ∈ prob_name_file
-    depo_name = string("src/comparaison/results/",name_prob)
-    for (k_solver, name_solver) ∈ solver_name
-      file_name = string(name_prob, "_", name_solver,".txt")
-      location = string(depo_name,"/", file_name)
-      #on ouvre et on ferme le fichier, on le reset
-      io = open(location,"w")
-      close(io)
-    end
-  end
-end
-=#
