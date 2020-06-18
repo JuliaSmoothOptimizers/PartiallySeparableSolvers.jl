@@ -450,7 +450,7 @@ end
 
 
 function _solver_TR_PBFGS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y}; max_eval :: Int=10000, kwargs...) where T where Y where Z <: AbstractNLPModel
-    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBFGS!(obj_Expr, n, x_init, type; kwargs...))
+    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBFGS!(obj_Expr, n, x_init, type; max_eval=max_eval, kwargs...))
     nrm_grad = norm(NLPModels.grad(m, x_final),2)
     nrm_grad_init = norm(NLPModels.grad(m, x_init),2)
     if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
@@ -604,7 +604,7 @@ end
 
 
 function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y}; max_eval :: Int=10000, kwargs...) where T where Y where Z <: AbstractNLPModel
-    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBS!(obj_Expr, n, x_init, type; kwargs...))
+    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBS!(obj_Expr, n, x_init, type; max_eval=max_eval, kwargs...))
     nrm_grad = norm(NLPModels.grad(m, x_final),2)
     nrm_grad_init = norm(NLPModels.grad(m, x_init),2)
     if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
