@@ -35,6 +35,6 @@ end
 
 using NLPModelsJuMP
 
-(m, evaluator,obj) = create_chained_Powel_JuMP_Model(8)
+# (m, evaluator,obj) = create_chained_Powel_JuMP_Model(8)
 # nlp_m = NLPModelsJuMP.MathOptNLPModel(m)
 # NLPModelsJuMP.
