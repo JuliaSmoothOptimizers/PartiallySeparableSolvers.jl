@@ -48,8 +48,8 @@ x = create_initial_point_Rosenbrock(n)
     x = ones(n)
     x_1 = (tmp -> 2*tmp).(x)
 
-    f_approx = ( elm_fun :: PartiallySeparableNLPModel.element_function{} -> PartiallySeparableNLPModel.element_hessian{Float64}( Array{Float64,2}(zeros(Float64, length(elm_fun.used_variable), length(elm_fun.used_variable)) ) ) )
-    f = (y :: PartiallySeparableNLPModel.element_function{} -> PartiallySeparableNLPModel.element_gradient{typeof(x[1])}(Vector{typeof(x[1])}(undef, length(y.used_variable) )) )
+    f_approx = ( elm_fun :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_hessian{Float64}( Array{Float64,2}(zeros(Float64, length(elm_fun.used_variable), length(elm_fun.used_variable)) ) ) )
+    f = (y :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_gradient{typeof(x[1])}(Vector{typeof(x[1])}(undef, length(y.used_variable) )) )
 
     exact_Hessian = PartiallySeparableNLPModel.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
     approx_hessian_SR1 = PartiallySeparableNLPModel.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))

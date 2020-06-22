@@ -43,7 +43,7 @@ function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where 
 
     # @show sps
     # construction des structure de données nécessaire pour le gradient à l'itération k/k+1 et le différence des gradients
-    construct_element_grad = (y :: PartiallySeparableNLPModel.element_function{} -> PartiallySeparableNLPModel.element_gradient{type}(Vector{type}(zeros(type, length(y.used_variable)) )) )
+    construct_element_grad = (y :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_gradient{type}(Vector{type}(zeros(type, length(y.used_variable)) )) )
     g_k = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
     g_k1 = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
     g = Vector{PartiallySeparableNLPModel.grad_vector{type}}([g_k,g_k1])
@@ -52,7 +52,7 @@ function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where 
     grad = Vector{type}(undef, n)
 
     # constructions des structures de données nécessaires pour le Hessien ou son approximation
-    construct_element_hess = ( elm_fun :: PartiallySeparableNLPModel.element_function{} -> PartiallySeparableNLPModel.element_hessian{type}( Array{type,2}(undef, length(elm_fun.used_variable), length(elm_fun.used_variable) )) )
+    construct_element_hess = ( elm_fun :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_hessian{type}( Array{type,2}(undef, length(elm_fun.used_variable), length(elm_fun.used_variable) )) )
     B_k = PartiallySeparableNLPModel.Hess_matrix{type}(construct_element_hess.(sps.structure))
     B_k1 = PartiallySeparableNLPModel.Hess_matrix{type}(construct_element_hess.(sps.structure))
     B = Vector{PartiallySeparableNLPModel.Hess_matrix{type}}([B_k, B_k1])
