@@ -61,11 +61,4 @@ JuMP_mod = MathOptNLPModel(m_ros, name="Chained Powel "*string(n))
             @test CalculusTreeTools.is_convex(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[i]))
         end
     end
-
-    # @test CalculusTreeTools.is_unknown(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[1]))
-    # @test CalculusTreeTools.is_convex(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[2]))
-    # @test CalculusTreeTools.is_unknown(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[3]))
-    # @test CalculusTreeTools.is_convex(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[4]))
-    # @test CalculusTreeTools.is_convex(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[5]))
-    # @test CalculusTreeTools.is_convex(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[6]))
 end
