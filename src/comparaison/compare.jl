@@ -34,7 +34,7 @@ function create_all_problems(nb_var_array :: Vector{Int})
 end
 
 
-first_criteria(n, n_obj, n_grad, n_hess) = n_obj + n*n_grad + n *n_hess
+first_criteria(n, n_obj, n_grad, n_hess) = n_obj + 5*n_grad + 5*n_hess
 function my_criteria_timeless(d :: DataFrames.DataFrame)
     nvar = d.nvar
     n_eval_obj = d.neval_obj
@@ -47,7 +47,7 @@ function my_criteria_timeless(d :: DataFrames.DataFrame)
     d.first_criteria = my_criteria
 end
 
-second_criteria(n, time, n_obj, n_grad, n_hess) = time / (n_obj + n*n_grad + n*n_hess)
+second_criteria(n, time, n_obj, n_grad, n_hess) = time / (n_obj + 5*n_grad + 5*n_hess)
 function my_criteria_time(d :: DataFrames.DataFrame)
     nvar = d.nvar
     iter = d.iter
@@ -82,14 +82,13 @@ end
 
 
 println(" \n\n génération des problemes")
-# n_array = [100,500,1000,2000,5000,10000,20000]
+n_array = [100,500,1000,2000,5000,10000,20000,40000,60000,80000,100000]
 # n_array = [10,20,30]
 # n_array = [1000,2000]
 # n_array = [100,200]
-n_array = [100,500,1000,2000,5000]
+# n_array = [100,500,1000,2000,5000]
 problems = create_all_problems(n_array)
 
-# error("")
 
 println("\n\ndéfinition des solver\n\n")
 
