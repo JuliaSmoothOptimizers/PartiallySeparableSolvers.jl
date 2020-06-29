@@ -82,11 +82,12 @@ end
 
 
 println(" \n\n génération des problemes")
-n_array = [100,500,1000,2000,5000,10000,20000,40000,60000,80000,100000]
+n_array = [100,500,1000,2000,5000,10000,25000,50000,100000]
 # n_array = [10,20,30]
 # n_array = [1000,2000]
-# n_array = [100,200]
+# n_array = [100,200,500,1000]
 # n_array = [100,500,1000,2000,5000]
+# n_array = [1000,5000,10000,20000,50000]
 problems = create_all_problems(n_array)
 
 
@@ -182,3 +183,18 @@ latex_table(io, stats[:p_sr1], cols=[:name, :nvar, :elapsed_time, :iter, :dual_f
 println(io, "\n\n\nPBS" )
 latex_table(io, stats[:p_bs], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
 close(io)
+
+
+println("eccriture des profiles")
+p_iter = SolverBenchmark.performance_profile(stats, df -> df.iter)
+savefig(p_iter, "src/comparaison/results/profiles/iter_profile.pdf")
+p_time = SolverBenchmark.performance_profile(stats, df -> df.elapsed_time)
+savefig(p_time, "src/comparaison/results/profiles/time_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats, df -> df.first_criteria)
+savefig(p_fst_crit, "src/comparaison/results/profiles/fst_crit_profile.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats, df -> df.second_criteria)
+savefig(p_snd_crit, "src/comparaison/results/profiles/snd_crit_profile.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats, df -> df.third_criteria)
+savefig(p_thd_crit, "src/comparaison/results/profiles/thd_crit_profile.pdf")
+
+println("fini")

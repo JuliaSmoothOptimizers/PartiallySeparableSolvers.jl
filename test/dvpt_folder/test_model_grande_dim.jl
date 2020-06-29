@@ -35,8 +35,14 @@ function create_initial_point_chained_Powel(n)
 end
 
 
-n = 100000
+n = 10000
 (m_ros,evaluator,obj) = create_chained_Powel_JuMP_Model(n)
 
 JuMP_mod = MathOptNLPModel(m_ros, name="chained Powel "*string(n))
 ges = PBS(JuMP_mod)
+@code_warntype PBS(JuMP_mod)
+@code_warntype PSR1(JuMP_mod)
+@code_warntype PBFGS(JuMP_mod)
+
+# using ProfileView, Profile
+# @profview PBS(JuMP_mod)
