@@ -37,42 +37,19 @@ function create_initial_point_chained_wood(n)
     return point_initial
 end
 
-# n_array = [100, 200, 300, 500]
-#
-# for i in n_array
-#     println(" nouveau modèle i = ", i)
-#     (m,evaluator,obj) = create_chained_wood_JuMP_Model(i)
-#     println("fin de la définition du modèle JuMP")
-#     inital_point = create_initial_point_chained_wood(i)
-#     println("fin de la définition du point iniitial")
-#
-#     (cpt2,s) = My_SPS_Model_Module.solver_TR_PSR1!(obj, i, inital_point)
-#     nlp = MathOptNLPModel(m)
-#     B = LSR1Operator(i, scaling=true) :: LSR1Operator{Float64} #scaling=true
-#     (x_f,cpt)  = solver_L_SR1_Ab_NLP(nlp, B, inital_point)
-#     @show MathOptInterface.eval_objective(evaluator, inital_point)
-#     @show MathOptInterface.eval_objective(evaluator, s.tpl_x[Int(s.index)])
-#     @show MathOptInterface.eval_objective(evaluator, x_f)
-#     g1 = Vector{Float64}(undef,i)
-#     g2 = Vector{Float64}(undef,i)
-#     MathOptInterface.eval_objective_gradient(evaluator, s.tpl_x[Int(s.index)],g1)
-#     MathOptInterface.eval_objective_gradient(evaluator, x_f, g2)
-#     @show norm(g1,2)
-#     @show norm(g2,2)
-# end
-#
-#
-(m,evaluator,obj_expr) = create_chained_wood_JuMP_Model(8)
-# @profview cpt,s = My_SPS_Model_Module.solver_TR_PSR1!(obj_expr, 500, create_initial_point_chained_wood(500))
-#
-# println("fin de la boucle")
-# println("résolution PSR1")
-#
-# println("résolution LSR1 JuMP")
-#
-#
+name_model_chained_wood(n :: Int) = "ChainedWood " * string(n)
 
-# @show MathOptInterface.eval_objective(evaluator, point_initial)
-# @show MathOptInterface.eval_objective(evaluator, x_f)
-# @show MathOptInterface.eval_objective(evaluator, s.tpl_x[Int(s.index)])
-# @show MathOptInterface.eval_objective_gradient(evaluator, s.tpl_x[Int(s.index)])
+function chainwoo(x)
+  n = length(x)
+  n % 4 == 0 || error("number of variables must be a multiple of 4")
+  return 1.0 + sum(100 * (x[2*i]   - x[2*i-1]^2)^2 + (1 - x[2*i-1])^2 +
+              90 * (x[2*i+2] - x[2*i+1]^2)^2 + (1 - x[2*i+1])^2 +
+              10 * (x[2*i] + x[2*i+2] - 2)^2 + 0.1 * (x[2*i] - x[2*i+2])^2 for i=1:div(n,2)-1)
+end
+
+
+create_chained_wood_ADNLPModel(n :: Int) = RADNLPModel(eval(chainwoo), create_initial_point_chained_wood(n), name=name_model_chained_wood(n))
+function create_chained_wood_JuMPModel(n :: Int)
+  (m_chained, evaluator,obj) = create_chained_wood_JuMP_Model(n)
+  return MathOptNLPModel(m_chained, name=name_model_chained_wood(n))
+end

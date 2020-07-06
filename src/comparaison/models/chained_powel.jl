@@ -33,8 +33,17 @@ function create_initial_point_chained_Powel(n)
 end
 
 
-using NLPModelsJuMP
+name_model_chained_powel(n :: Int) = "ChainedPowel " * string(n)
 
-# (m, evaluator,obj) = create_chained_Powel_JuMP_Model(8)
-# nlp_m = NLPModelsJuMP.MathOptNLPModel(m)
-# NLPModelsJuMP.
+function chainpow(x)
+  n = length(x)
+  (n-2) % 2 == 0 || error("number of variables minus 2 must be even")
+  return sum( (x[2*i-1] + x[2*i])^2 + 5*(x[2*i+1] + x[2*i+2])^2 + (x[2*i] - 2*x[2*i+1])^4 + 10*(x[2*i-1] + x[2*i+2])^4 for i=1:div(n-2,2))
+end
+
+
+create_chained_powel_ADNLPModel(n :: Int) = RADNLPModel(eval(chainpow), create_initial_point_chained_Powel(n), name=name_model_chained_powel(n))
+function create_chained_powel_JuMPModel(n :: Int)
+  (m_chained, evaluator,obj) = create_chained_Powel_JuMP_Model(n)
+  return MathOptNLPModel(m_chained, name=name_model_chained_powel(n))
+end

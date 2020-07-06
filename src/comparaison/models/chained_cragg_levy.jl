@@ -16,8 +16,6 @@ function create_chained_cragg_levy_JuMP_Model(n :: Int)
     vec_var = JuMP.all_variables(m)
     vec_value = create_initial_point_chained_cragg_levy(n)
     JuMP.set_start_value.(vec_var, vec_value)
-    # JuMP.set_name(m, "Cragg Levy "*string(n))
-    # m.moi_backend.model_cache.model.name = "Cragg Levy "*string(n)
     return (m, evaluator,obj)
 end
 
@@ -36,5 +34,17 @@ end
 
 
 
-#  (m, evaluator,obj) = create_chained_cragg_levy_JuMP_Model(8)
-# @show m.moi_backend.model_cache.model.name
+name_model_cragg_levy(n :: Int) = "CraggLevy " * string(n)
+
+function cragglevy(x)
+  n = length(x)
+  (n-2) % 2 == 0 || error("number of variables minus 2 must be even")
+  return sum( exp(x[2*i-1])^4 + 100 * (x[2*i]- x[2*i+1])^6 + (tan(x[2*i+1]) - x[2*i+2])^4 + x[2*i-1]^8 + (x[2*i+2] -1 )^2 for i=1:div(n-2,2))
+end
+
+
+create_cragg_levy_ADNLPModel(n :: Int) = RADNLPModel(eval(cragglevy), create_initial_point_chained_cragg_levy(n), name=name_model_cragg_levy(n))
+function create_cragg_levy_JuMPModel(n :: Int)
+  (m_cragg, evaluator,obj) = create_chained_cragg_levy_JuMP_Model(n)
+  return MathOptNLPModel(m_cragg, name=name_model_cragg_levy(n))
+end
