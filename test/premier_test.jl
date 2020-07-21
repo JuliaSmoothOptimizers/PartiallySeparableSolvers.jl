@@ -1,5 +1,8 @@
 using JuMP, MathOptInterface, NLPModelsJuMP, LinearAlgebra, SparseArrays, Test
 using CalculusTreeTools, PartiallySeparableNLPModel, PartiallySeparableSolvers
+using JSOSolvers
+
+using NLPModels
 
 function create_initial_point_Rosenbrock(n)
     point_initial = Vector{Float64}(undef, n)
@@ -92,6 +95,25 @@ end
 # PartiallySeparableSolvers.solver_TR_PBFGS!(obj, n, x)
 # PartiallySeparableSolvers.solver_TR_PBFGS!(obj_expr_tree, n, x)
 
+# nlp = PartiallySeparableSolvers.PartionnedNLPModel(obj, n ,typeof(x[1]))
+# res_obj = NLPModels.obj(nlp, x)
+# g = similar(x)
+# NLPModels.grad!(nlp, x, g)
+# @show res_obj, g
+
+
+
+
+
+
+ges9 = PartiallySeparableSolvers.PTRUNK(JuMP_mod)
+
+# error("fin")
+ges8 = JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod))
+# Juno.@run JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod))
+ges7 = JSOSolvers.trunk(JuMP_mod)
+error("end")
+ges6 = PTRUNK(JuMP_mod)
 
 ges2 = PSR1(JuMP_mod)
 ges1 = PBFGS(JuMP_mod)
@@ -99,7 +121,7 @@ ges4 = my_LSR1(JuMP_mod)
 ges3 = my_LBFGS(JuMP_mod)
 ges5 = PBS(JuMP_mod)
 
-ges = [ges1,ges2,ges3,ges4]
+ges = [ges1,ges2,ges3,ges4, ges5, ges6]
 MOI_gradient = Vector{typeof(x[1])}(undef,n)
 ges_grad = []
 for i in ges

@@ -105,12 +105,11 @@ end
 
 println(" \n\n génération des problemes")
 # n_array = [100,500,1000,2000,5000,10000,25000,50000,100000]
-# n_array = [20,40,60,100,500]
+# n_array = [20,40,60,100,500, 1000, 2000]
 n_array = [20,40,60]
-# n_array = [1000,2000]
-# n_array = [100,200,500,1000]
+# n_array = [500,1000,2000,5000]
 # n_array = [100,500,1000,2000,3000]
-# n_array = [1000,5000,10000,20000,50000]
+# n_array = [1000,5000,10000,20000,50000,100000]
 # n_array = [100]
 problems = create_all_problems(n_array)
 problems2 = create_all_problems2(n_array)
@@ -123,6 +122,7 @@ println("\n\ndéfinition des solver\n\n")
 const atol = 1.0e-5
 const rtol = 1.0e-6
 const max_time = 300.0
+const max_eval = 2500.0
 
 
 solver2 = Dict{Symbol,Function}(
@@ -135,28 +135,42 @@ solver2 = Dict{Symbol,Function}(
 solver = Dict{Symbol,Function}(
 :trunk => ((prob;kwargs...) -> JSOSolvers.trunk(prob;kwargs...)),
 :trunk_lsr1 => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
+:trunk_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
 :my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
 :my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
 :p_bfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
 :p_sr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
-:p_bs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...))
+:p_bs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
+:p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
 )
+
+
+
+
+
+keys_hess = [:trunk, :trunk_adnlpmodel, :trunk_SPS, :p_trunk]
+keys_bfgs = [ :lbfgs_adnlpmodel, :my_lbfgs, :p_bfgs]
+keys_sr1 =  [:trunk_lsr1, :lsr1_adnlpmodel, :my_lsr1, :p_sr1, :p_bs ]
+
 
 
 #= Lancement du benchmark sur les problèmes générés, sur les solvers défini dans la variable solvers =#
 println("lancement des benchmmarks")
 #lancement de bmark_solver sur les ADNLPModels
-stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = 5000, atol=atol, rtol=rtol)
+stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 #récupération des clés
 keys_stats2 = keys(stats2)
 
 #lancement de bmark_solver sur les NLPModelJUMP
-stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = 5000, atol=atol, rtol=rtol)
+stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 
 #on ajoute les Dataframes de stats2 à stats
 for i in keys_stats2
   stats[i] = stats2[i]
 end
+
+
+
 
 
 
@@ -170,13 +184,30 @@ for i in keys_stats
   acceptance_criteria(stats[i])
 end
 
+#Construction de tables particulières pour chaque classe de solvers.
+
+stats_hess = Dict{Symbol,DataFrame}([])
+for i in keys_hess
+  stats_hess[i] = stats[i]
+end
+
+stats_bfgs = Dict{Symbol,DataFrame}([])
+for i in keys_bfgs
+  stats_bfgs[i] = stats[i]
+end
+
+stats_sr1 = Dict{Symbol,DataFrame}([])
+for i in keys_sr1
+  stats_sr1[i] = stats[i]
+end
+
 println("affichage des tables")
 #selection des champs à affichier
 selected_fields = [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria]
 for i in keys_stats
+  println(stdout, "\n\n\n" * string(i) )
   markdown_table(stdout, stats[i], cols=selected_fields)
 end
-
 
 #= Ecriture des résultats dans un fichier au format markdown=#
 println("écriture des résultats markdown")
@@ -206,9 +237,12 @@ end
 close(io)
 
 
+
 println("ecriture des profiles")
 #pas d'affichage des profils, server amdahl
 ENV["GKSwstype"]=100
+
+println("écriture de tous les profiles")
 p_iter = SolverBenchmark.performance_profile(stats, df -> df.iter)
 savefig(p_iter, "src/comparaison/results/profiles/iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats, df -> df.elapsed_time)
@@ -220,4 +254,49 @@ savefig(p_snd_crit, "src/comparaison/results/profiles/snd_crit_profile.pdf")
 p_thd_crit = SolverBenchmark.performance_profile(stats, df -> df.third_criteria)
 savefig(p_thd_crit, "src/comparaison/results/profiles/thd_crit_profile.pdf")
 
-println("fini")
+println("écriture des profiles hess like")
+
+repo_hess = "src/comparaison/results/profiles/hess_like/"
+p_iter = SolverBenchmark.performance_profile(stats_hess, df -> df.iter)
+savefig(p_iter, repo_hess * "iter_profile.pdf")
+p_time = SolverBenchmark.performance_profile(stats_hess, df -> df.elapsed_time)
+savefig(p_time, repo_hess * "time_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.first_criteria)
+savefig(p_fst_crit, repo_hess * "fst_crit_profile.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.second_criteria)
+savefig(p_snd_crit, repo_hess * "snd_crit_profile.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.third_criteria)
+savefig(p_thd_crit, repo_hess * "thd_crit_profile.pdf")
+
+
+println("écriture des profiles BFGS like")
+
+repo_bfgs = "src/comparaison/results/profiles/bfgs_like/"
+p_iter = SolverBenchmark.performance_profile(stats_bfgs, df -> df.iter)
+savefig(p_iter, repo_bfgs * "iter_profile.pdf")
+p_time = SolverBenchmark.performance_profile(stats_bfgs, df -> df.elapsed_time)
+savefig(p_time, repo_bfgs * "time_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.first_criteria)
+savefig(p_fst_crit, repo_bfgs * "fst_crit_profile.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.second_criteria)
+savefig(p_snd_crit, repo_bfgs * "snd_crit_profile.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.third_criteria)
+savefig(p_thd_crit, repo_bfgs * "thd_crit_profile.pdf")
+
+
+println("écriture des profiles BFGS like")
+
+repo_sr1 = "src/comparaison/results/profiles/sr1_like/"
+p_iter = SolverBenchmark.performance_profile(stats_sr1, df -> df.iter)
+savefig(p_iter, repo_sr1 * "iter_profile.pdf")
+p_time = SolverBenchmark.performance_profile(stats_sr1, df -> df.elapsed_time)
+savefig(p_time, repo_sr1 * "time_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.first_criteria)
+savefig(p_fst_crit, repo_sr1 * "fst_crit_profile.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.second_criteria)
+savefig(p_snd_crit, repo_sr1 * "snd_crit_profile.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.third_criteria)
+savefig(p_thd_crit, repo_sr1 * "thd_crit_profile.pdf")
+
+
+println("Fin des écritures")
