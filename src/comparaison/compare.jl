@@ -32,7 +32,7 @@ end
 
 
 """
-    create_all_problems(n)
+    create_all_problems2(n)
 Function that create the problem that I will use with bmark_solver. I use function to generate automaticaly some Models, theses are defined in other
 files of the repo models. n Is the size of the problems. Trhis function generates RADNLPModels.
 """
@@ -62,7 +62,7 @@ function my_criteria_timeless(d :: DataFrames.DataFrame)
     for i in 1:length(nvar)
       push!(my_criteria, first_criteria(nvar[i], n_eval_obj[i], n_eval_grad[i], n_eval_hprod[i]))
     end
-    d.first_criteria = my_criteria
+    d.obj_5grad_5Hv = my_criteria
 end
 
 """
@@ -81,7 +81,7 @@ function my_criteria_time(d :: DataFrames.DataFrame)
     for i in 1:length(nvar)
       push!(my_criteria, second_criteria(nvar[i], elapsed_time[i], n_eval_obj[i], n_eval_grad[i], n_eval_hprod[i]))
     end
-    d.second_criteria = my_criteria
+    d.time_sur_obj_5grad_5Hv = my_criteria
 end
 
 
@@ -89,7 +89,7 @@ end
     second_criteria(n_obj, neval_grad)
 Returns the percentage of step keep by our solver
 """
-third_criteria(n_obj, n_grad) = (n_grad/n_obj)*100
+third_criteria(n_obj, n_grad) = 1/((n_grad/n_obj)*100)
 function acceptance_criteria(d :: DataFrames.DataFrame)
   n_eval_obj = d.neval_obj
   n_eval_grad = d.neval_grad
@@ -97,7 +97,7 @@ function acceptance_criteria(d :: DataFrames.DataFrame)
   for i in 1:length(n_eval_obj)
     push!(my_criteria, third_criteria(n_eval_obj[i], n_eval_grad[i]))
   end
-  d.third_criteria = my_criteria
+  d.inverse_pourcentage_pas_accepte = my_criteria
 end
 
 
@@ -106,8 +106,8 @@ end
 println(" \n\n génération des problemes")
 # n_array = [100,500,1000,2000,5000,10000,25000,50000,100000]
 # n_array = [20,40,60,100,500, 1000, 2000]
-n_array = [20,40,60]
-# n_array = [500,1000,2000,5000]
+# n_array = [20,40,60]
+n_array = [1000,2000,5000, 10000]
 # n_array = [100,500,1000,2000,3000]
 # n_array = [1000,5000,10000,20000,50000,100000]
 # n_array = [100]
@@ -121,8 +121,8 @@ println("\n\ndéfinition des solver\n\n")
 
 const atol = 1.0e-5
 const rtol = 1.0e-6
-const max_time = 300.0
-const max_eval = 2500.0
+const max_time = 600.0
+const max_eval = 1500
 
 
 solver2 = Dict{Symbol,Function}(
@@ -145,6 +145,10 @@ solver = Dict{Symbol,Function}(
 )
 
 
+solver3 = Dict{Symbol,Function}(
+  :p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
+)
+stats3 = bmark_solvers(solver3, problems; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 
 
 
@@ -203,7 +207,7 @@ end
 
 println("affichage des tables")
 #selection des champs à affichier
-selected_fields = [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria]
+selected_fields = [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :obj_5grad_5Hv, :time_sur_obj_5grad_5Hv, :inverse_pourcentage_pas_accepte]
 for i in keys_stats
   println(stdout, "\n\n\n" * string(i) )
   markdown_table(stdout, stats[i], cols=selected_fields)
@@ -218,7 +222,7 @@ io = open(location_md,"w+")
 
 for i in keys_stats
   println(io, "\n\n\n" * string(i) )
-  markdown_table(io, stats[i], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+  markdown_table(io, stats[i], cols=selected_fields)
 end
 close(io)
 
@@ -232,7 +236,7 @@ close(io)
 io = open(location_latex,"w+")
 for i in keys_stats
   println(io, "\n\n\n" * string(i) )
-  latex_table(io, stats[i], cols=[:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :first_criteria, :second_criteria, :third_criteria])
+  latex_table(io, stats[i], cols=selected_fields)
 end
 close(io)
 
@@ -247,12 +251,12 @@ p_iter = SolverBenchmark.performance_profile(stats, df -> df.iter)
 savefig(p_iter, "src/comparaison/results/profiles/iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats, df -> df.elapsed_time)
 savefig(p_time, "src/comparaison/results/profiles/time_profile.pdf")
-p_fst_crit = SolverBenchmark.performance_profile(stats, df -> df.first_criteria)
-savefig(p_fst_crit, "src/comparaison/results/profiles/fst_crit_profile.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats, df -> df.second_criteria)
-savefig(p_snd_crit, "src/comparaison/results/profiles/snd_crit_profile.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats, df -> df.third_criteria)
-savefig(p_thd_crit, "src/comparaison/results/profiles/thd_crit_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats, df -> df.obj_5grad_5Hv)
+savefig(p_fst_crit, "src/comparaison/results/profiles/obj_5grad_5Hv.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats, df -> df.time_sur_obj_5grad_5Hv)
+savefig(p_snd_crit, "src/comparaison/results/profiles/time_sur_obj_5grad_5Hv.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats, df -> df.inverse_pourcentage_pas_accepte)
+savefig(p_thd_crit, "src/comparaison/results/profiles/inverse_pourcentage_pas_accepte.pdf")
 
 println("écriture des profiles hess like")
 
@@ -261,12 +265,12 @@ p_iter = SolverBenchmark.performance_profile(stats_hess, df -> df.iter)
 savefig(p_iter, repo_hess * "iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats_hess, df -> df.elapsed_time)
 savefig(p_time, repo_hess * "time_profile.pdf")
-p_fst_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.first_criteria)
-savefig(p_fst_crit, repo_hess * "fst_crit_profile.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.second_criteria)
-savefig(p_snd_crit, repo_hess * "snd_crit_profile.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.third_criteria)
-savefig(p_thd_crit, repo_hess * "thd_crit_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.obj_5grad_5Hv)
+savefig(p_fst_crit, repo_hess * "obj_5grad_5Hv.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.time_sur_obj_5grad_5Hv)
+savefig(p_snd_crit, repo_hess * "time_sur_obj_5grad_5Hv.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.inverse_pourcentage_pas_accepte)
+savefig(p_thd_crit, repo_hess * "inverse_pourcentage_pas_accepte.pdf")
 
 
 println("écriture des profiles BFGS like")
@@ -276,12 +280,12 @@ p_iter = SolverBenchmark.performance_profile(stats_bfgs, df -> df.iter)
 savefig(p_iter, repo_bfgs * "iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats_bfgs, df -> df.elapsed_time)
 savefig(p_time, repo_bfgs * "time_profile.pdf")
-p_fst_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.first_criteria)
-savefig(p_fst_crit, repo_bfgs * "fst_crit_profile.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.second_criteria)
-savefig(p_snd_crit, repo_bfgs * "snd_crit_profile.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.third_criteria)
-savefig(p_thd_crit, repo_bfgs * "thd_crit_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.obj_5grad_5Hv)
+savefig(p_fst_crit, repo_bfgs * "obj_5grad_5Hv.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.time_sur_obj_5grad_5Hv)
+savefig(p_snd_crit, repo_bfgs * "time_sur_obj_5grad_5Hv.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.inverse_pourcentage_pas_accepte)
+savefig(p_thd_crit, repo_bfgs * "inverse_pourcentage_pas_accepte.pdf")
 
 
 println("écriture des profiles BFGS like")
@@ -291,12 +295,12 @@ p_iter = SolverBenchmark.performance_profile(stats_sr1, df -> df.iter)
 savefig(p_iter, repo_sr1 * "iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats_sr1, df -> df.elapsed_time)
 savefig(p_time, repo_sr1 * "time_profile.pdf")
-p_fst_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.first_criteria)
-savefig(p_fst_crit, repo_sr1 * "fst_crit_profile.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.second_criteria)
-savefig(p_snd_crit, repo_sr1 * "snd_crit_profile.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.third_criteria)
-savefig(p_thd_crit, repo_sr1 * "thd_crit_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.obj_5grad_5Hv)
+savefig(p_fst_crit, repo_sr1 * "obj_5grad_5Hv.pdf")
+p_snd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.time_sur_obj_5grad_5Hv)
+savefig(p_snd_crit, repo_sr1 * "time_sur_obj_5grad_5Hv.pdf")
+p_thd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.inverse_pourcentage_pas_accepte)
+savefig(p_thd_crit, repo_sr1 * "inverse_pourcentage_pas_accepte.pdf")
 
 
 println("Fin des écritures")

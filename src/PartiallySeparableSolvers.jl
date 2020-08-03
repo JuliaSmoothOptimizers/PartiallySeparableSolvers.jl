@@ -28,7 +28,7 @@ module PartiallySeparableSolvers
     PBFGS(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PBFGS!(m; kwargs... )
     PSR1(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PSR1!(m; kwargs... )
     PBS(m :: T; kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBS!(m; kwargs... )
-    PTRUNK( nlp :: T;  kwargs...) where T <: AbstractNLPModel = my_Part_Trunk(nlp; kwargs...)
+    PTRUNK( nlp :: T; kwargs...) where T <: AbstractNLPModel = my_Part_Trunk(nlp; kwargs...)
 
 
     export PBFGS, PSR1, PBS, PTRUNK

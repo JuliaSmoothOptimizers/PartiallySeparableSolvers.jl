@@ -198,7 +198,7 @@ function my_Part_Trunk(model_JUMP :: T; max_eval :: Int=10000, x :: AbstractVect
 
     x_init = model_JUMP.meta.x0
     println("début partitionned Trunk")
-    Δt = @timed ((x_final,cpt) = solver_TR_CG_Ab_NLP_Trunk(nlp; x=x, kwargs...))
+    Δt = @timed ((x_final,cpt) = solver_TR_CG_Ab_NLP_Trunk(nlp; x=x, max_eval=max_eval, kwargs...))
 
     nrm_grad = norm( NLPModels.grad(nlp, x_final), 2)
     nrm_grad_init = norm(NLPModels.grad(nlp, x_init),2)

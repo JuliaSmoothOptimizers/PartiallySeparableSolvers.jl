@@ -3,6 +3,7 @@ using CalculusTreeTools, PartiallySeparableNLPModel
 using LinearOperators
 import NLPModels: increment!, obj,grad!, hprod!, hprod
 using NLPModels
+using JuMP
 
 using FastClosures
 
@@ -13,9 +14,17 @@ using FastClosures
     end
 
 
-
     function PartionnedNLPModel(nlp :: T) where T <: AbstractNLPModel
         model = nlp.eval.m
+        evaluator = JuMP.NLPEvaluator(model)
+        MathOptInterface.initialize(evaluator, [:ExprGraph])
+        obj_Expr = MathOptInterface.objective_expr(evaluator) :: Expr
+        n = model.moi_backend.model_cache.model.num_variables_created
+        x0 = nlp.meta.x0
+        return PartionnedNLPModel(obj_Expr, n, x0)
+    end
+
+    function PartionnedNLPModel(model :: JuMP.Model)
         evaluator = JuMP.NLPEvaluator(model)
         MathOptInterface.initialize(evaluator, [:ExprGraph])
         obj_Expr = MathOptInterface.objective_expr(evaluator) :: Expr
