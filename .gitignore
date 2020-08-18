@@ -27,3 +27,6 @@ Manifest.toml
 src/comparaison/archive/**
 src/comparaison/results/profiles/**
 src/comparaison/file_dataframe/**
+
+benchmark/profiles/profiles.7z
+benchmark/profiles/archive/**

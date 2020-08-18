@@ -21,6 +21,7 @@ end
 function create_Rosenbrock_JuMP_Model(n :: Int)
     m = Model()
     @variable(m, x[1:n])
+    # @NLobjective(m, Min, sum( 100 * (x[j-1]^2 - x[j])^2 + (x[j-1] - 1)^2 for j in 2:n)) #rosenbrock function
     @NLobjective(m, Min, sum( 100 * (x[j-1]^2 - x[j])^2 + (x[j-1] - 1)^2  for j in 2:n)) #rosenbrock function
     evaluator = JuMP.NLPEvaluator(m)
     MathOptInterface.initialize(evaluator, [:ExprGraph, :Hess])
@@ -102,9 +103,11 @@ end
 # @show res_obj, g
 
 
+sps_nlp = PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod)
 
+NLPModels.obj(sps_nlp, x)
 
-
+# error("fin")
 
 ges9 = PartiallySeparableSolvers.PTRUNK(JuMP_mod)
 
@@ -112,7 +115,7 @@ ges9 = PartiallySeparableSolvers.PTRUNK(JuMP_mod)
 ges8 = JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod))
 # Juno.@run JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod))
 ges7 = JSOSolvers.trunk(JuMP_mod)
-error("end")
+# error("end")
 ges6 = PTRUNK(JuMP_mod)
 
 ges2 = PSR1(JuMP_mod)
