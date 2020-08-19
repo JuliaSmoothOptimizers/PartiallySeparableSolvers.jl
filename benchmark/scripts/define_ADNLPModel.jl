@@ -64,17 +64,6 @@ end
 chainwoo_ADNLPModel(n :: Int=100) = RADNLPModel(chainwoo, start_chainwoo(n))
 
 
-function chnrosnb_mod(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-  n < 2 && @warn("chnrosnb: number of variables must be ≥ 2")
-  n = max(2, n)
-
-  16 * sum((x[i-1] - x[i]^2)^2*(1.5+sin(i))^2 for i=2:n) + sum((1.0 - x[i])^2 for i=2:n)
-end
-start_chnrosnb_mod(n :: Int) = start_ones(n)
-chnrosnb_mod_ADNLPModel(n :: Int=100) = RADNLPModel(chnrosnb_mod, start_chnrosnb_mod(n))
-
-
 function cosine(x :: AbstractVector{Y}) where Y <: Number
   n = length(x)
   n < 2 && @warn("cosine: number of variables must be ≥ 2")
@@ -271,15 +260,6 @@ start_errinros_mod(n :: Int) =  (x -> -1 * x).(start_ones(n))
 errinros_mod_ADNLPModel(n :: Int=100) = RADNLPModel(errinros_mod, start_errinros_mod(n))
 
 
-function extrosnb(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-  n < 2 && @warn("extrosnb: number of variables must be ≥ 2")
-  n = max(2, n)
-
-  100.0 * sum((x[i] - x[i - 1]^2)^2 for i=2:n) + (1.0 - x[1])^2
-end
-start_extrosnb(n :: Int) =  (x -> -1 * x).(start_ones(n))
-extrosnb_ADNLPModel(n :: Int=100) = RADNLPModel(extrosnb, start_extrosnb(n))
 
 
 function freuroth(x :: AbstractVector{Y}) where Y <: Number
@@ -356,15 +336,7 @@ start_noncvxun(n :: Int) =  (x -> (Float64)(x)).([1:n;])
 noncvxun_ADNLPModel(n :: Int=100) = RADNLPModel(noncvxun, start_noncvxun(n))
 
 
-function nondia(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-  n < 2 && @warn("nondia: number of variables must be ≥ 2")
-  n = max(2, n)
 
-  (x[1] - 1.0)^2 + 100*sum((x[1] - x[i]^2)^2 for i=2:n)
-end
-start_nondia(n :: Int) = (x -> -1 * x).(start_ones(n))
-nondia_ADNLPModel(n :: Int=100) = RADNLPModel(nondia, start_nondia(n))
 
 
 function nondquar(x :: AbstractVector{Y}) where Y <: Number
@@ -378,13 +350,6 @@ start_nondquar(n :: Int) = begin x0 = ones(n); x0[2 * collect(1:div(n, 2))] .= -
 nondquar_ADNLPModel(n :: Int=100) = RADNLPModel(nondquar, start_nondquar(n))
 
 #pas partiellement séparable
-function power(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-
-  (sum((i * x[i]^2) for i=1:n))^2
-end
-start_power(n :: Int) =  start_ones(n)
-power_ADNLPModel(n :: Int=100) = RADNLPModel(power, start_power(n))
 
 
 function quartc(x :: AbstractVector{Y}) where Y <: Number
@@ -420,6 +385,9 @@ function start_sbrybnd(n :: Int)
 end
 sbrybnd_ADNLPModel(n :: Int=100) = RADNLPModel(sbrybnd, start_sbrybnd(n))
 
+
+
+
 function tridia(x :: AbstractVector{Y}, α::Float64=2.0, β::Float64=1.0, γ::Float64=1.0, δ::Float64=1.0) where Y <: Number
   n = length(x)
 
@@ -429,14 +397,6 @@ start_tridia(n :: Int) = start_ones(n)
 tridia_ADNLPModel(n :: Int=100) = RADNLPModel(tridia, start_tridia(n))
 
 
-function vardim(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-  nlp = Model()
-
-  sum((x[i] - 1)^2 for i=1:n) + (sum(i * (x[i] - 1) for i=1:n))^2 + (sum(i * (x[i] - 1) for i=1:n))^4
-end
-start_vardim(n :: Int) =  map(i -> (Float64)(1 - i/n), [1:n;])
-vardim_ADNLPModel(n :: Int=100) = RADNLPModel(vardim, start_vardim(n))
 
 
 function scosine(x :: AbstractVector{Y}) where Y <: Number
@@ -473,38 +433,8 @@ start_sinquad(n :: Int) =  (x -> 0.1 * x).(start_ones(n))
 sinquad_ADNLPModel(n :: Int=100) = RADNLPModel(sinquad, start_sinquad(n))
 
 
-function sparsine(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-  n < 10 && @warn("sparsine: number of variables must be ≥ 10")
-  n = max(10, n)
-
-  0.5 * sum(
-    i * (sin(x[i]) +
-    sin(x[mod(2*i-1, n) + 1]) +
-    sin(x[mod(3*i-1, n) + 1]) +
-    sin(x[mod(5*i-1, n) + 1]) +
-    sin(x[mod(7*i-1, n) + 1]) +
-    sin(x[mod(11*i-1, n) + 1]))^2 for i=1:n)
-end
-start_sparsine(n :: Int) =  (x -> 0.5 * x).(start_ones(n))
-sparsine_ADNLPModel(n :: Int=100) = RADNLPModel(sparsine, start_sparsine(n))
 
 
-function sparsqur(x :: AbstractVector{Y}) where Y <: Number
-  n = length(x)
-  n < 10 && @warn("sparsqur: number of variables must be ≥ 10")
-  n = max(10, n)
-
-  1/8 * sum(
-  i * (x[i]^2 +
-  x[mod(2*i-1, n) + 1]^2 +
-  x[mod(3*i-1, n) + 1]^2 +
-  x[mod(5*i-1, n) + 1]^2 +
-  x[mod(7*i-1, n) + 1]^2 +
-  x[mod(11*i-1, n) + 1]^2)^2 for i=1:n)
-end
-start_sparsqur(n :: Int) =  (x -> 0.5 * x).(start_ones(n))
-sparsqur_ADNLPModel(n :: Int=100) = RADNLPModel(sparsqur, start_sparsqur(n))
 
 
 function srosenbr(x :: AbstractVector{Y}) where Y <: Number
@@ -553,3 +483,93 @@ _ADNLPModel(n :: Int=100) = RADNLPModel(eg2, start_(n))
 # dixmaanf_adnlp = woods_ADNLPModel(n)
 # ges = JSOSolvers.trunk(dixmaanf_adnlp)
 # @show ges
+
+
+#peu proprice par manque de prétraitement de l'arbre
+function extrosnb(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+  n < 2 && @warn("extrosnb: number of variables must be ≥ 2")
+  n = max(2, n)
+
+  100.0 * sum((x[i] - x[i - 1]^2)^2 for i=2:n) + (1.0 - x[1])^2
+end
+start_extrosnb(n :: Int) =  (x -> -1 * x).(start_ones(n))
+extrosnb_ADNLPModel(n :: Int=100) = RADNLPModel(extrosnb, start_extrosnb(n))
+
+
+function chnrosnb_mod(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+  n < 2 && @warn("chnrosnb: number of variables must be ≥ 2")
+  n = max(2, n)
+
+  16 * sum((x[i-1] - x[i]^2)^2*(1.5+sin(i))^2 for i=2:n) + sum((1.0 - x[i])^2 for i=2:n)
+end
+start_chnrosnb_mod(n :: Int) = start_ones(n)
+chnrosnb_mod_ADNLPModel(n :: Int=100) = RADNLPModel(chnrosnb_mod, start_chnrosnb_mod(n))
+
+
+function nondia(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+  n < 2 && @warn("nondia: number of variables must be ≥ 2")
+  n = max(2, n)
+
+  (x[1] - 1.0)^2 + 100*sum((x[1] - x[i]^2)^2 for i=2:n)
+end
+start_nondia(n :: Int) = (x -> -1 * x).(start_ones(n))
+nondia_ADNLPModel(n :: Int=100) = RADNLPModel(nondia, start_nondia(n))
+
+# pas de SPS
+function power(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+
+  (sum((i * x[i]^2) for i=1:n))^2
+end
+start_power(n :: Int) =  start_ones(n)
+power_ADNLPModel(n :: Int=100) = RADNLPModel(power, start_power(n))
+
+
+
+
+function vardim(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+  nlp = Model()
+
+  sum((x[i] - 1)^2 for i=1:n) + (sum(i * (x[i] - 1) for i=1:n))^2 + (sum(i * (x[i] - 1) for i=1:n))^4
+end
+start_vardim(n :: Int) =  map(i -> (Float64)(1 - i/n), [1:n;])
+vardim_ADNLPModel(n :: Int=100) = RADNLPModel(vardim, start_vardim(n))
+
+
+function sparsine(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+  n < 10 && @warn("sparsine: number of variables must be ≥ 10")
+  n = max(10, n)
+
+  0.5 * sum(
+    i * (sin(x[i]) +
+    sin(x[mod(2*i-1, n) + 1]) +
+    sin(x[mod(3*i-1, n) + 1]) +
+    sin(x[mod(5*i-1, n) + 1]) +
+    sin(x[mod(7*i-1, n) + 1]) +
+    sin(x[mod(11*i-1, n) + 1]))^2 for i=1:n)
+end
+start_sparsine(n :: Int) =  (x -> 0.5 * x).(start_ones(n))
+sparsine_ADNLPModel(n :: Int=100) = RADNLPModel(sparsine, start_sparsine(n))
+
+
+
+function sparsqur(x :: AbstractVector{Y}) where Y <: Number
+  n = length(x)
+  n < 10 && @warn("sparsqur: number of variables must be ≥ 10")
+  n = max(10, n)
+
+  1/8 * sum(
+  i * (x[i]^2 +
+  x[mod(2*i-1, n) + 1]^2 +
+  x[mod(3*i-1, n) + 1]^2 +
+  x[mod(5*i-1, n) + 1]^2 +
+  x[mod(7*i-1, n) + 1]^2 +
+  x[mod(11*i-1, n) + 1]^2)^2 for i=1:n)
+end
+start_sparsqur(n :: Int) =  (x -> 0.5 * x).(start_ones(n))
+sparsqur_ADNLPModel(n :: Int=100) = RADNLPModel(sparsqur, start_sparsqur(n))

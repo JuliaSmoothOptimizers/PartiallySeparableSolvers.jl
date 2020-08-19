@@ -15,6 +15,8 @@ const SUITE = BenchmarkGroup()
 problem_collection = create_problems()
 global cpt = 1
 for (mod, mod_AD) in problem_collection
+  println("obj : itération " * string(cpt) *  "/41")
+
   n = mod.moi_backend.model_cache.model.num_variables_created
 
 

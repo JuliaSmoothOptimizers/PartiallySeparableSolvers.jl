@@ -650,6 +650,12 @@ git-tree-sha1 = "6aae7f1cfdc5241037c08586fa9e80d45f584db7"
 uuid = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
 version = "0.12.4"
 
+[[NLPModelsJuMP]]
+deps = ["JuMP", "LinearAlgebra", "MathOptInterface", "NLPModels", "Printf", "SparseArrays"]
+git-tree-sha1 = "cc7531a2bf29ea8e350590df70041cde6f29b6ff"
+uuid = "792afdf1-32c1-5681-94e0-d7bf7a5df49e"
+version = "0.6.3"
+
 [[NaNMath]]
 git-tree-sha1 = "c84c576296d0e2fbb3fc134d3e09086b3ea617cd"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
