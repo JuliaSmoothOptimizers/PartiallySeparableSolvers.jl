@@ -14,41 +14,6 @@ using PartiallySeparableSolvers
 
 
 """
-    create_all_problems(n)
-Function that create the problem that I will use with bmark_solver. I use function to generate automaticaly some Models, theses are defined in other
-files of the repo models. n Is the size of the problems. Trhis function generates NLPMoodelsJuMP.
-"""
-function create_all_problems(nb_var_array :: Vector{Int})
-  problem_array = []
-  for i in nb_var_array
-    push!(problem_array, create_rosenbrock_JuMPModel(i))
-    push!(problem_array, create_chained_wood_JuMPModel(i))
-    push!(problem_array, create_chained_powel_JuMPModel(i))
-    push!(problem_array, create_cragg_levy_JuMPModel(i))
-    push!(problem_array, create_generalisation_brown_JuMPModel(i))
-  end
-  return problem_array
-end
-
-
-"""
-    create_all_problems2(n)
-Function that create the problem that I will use with bmark_solver. I use function to generate automaticaly some Models, theses are defined in other
-files of the repo models. n Is the size of the problems. Trhis function generates RADNLPModels.
-"""
-function create_all_problems2(nb_var_array :: Vector{Int})
-  problem_array = []
-  for i in nb_var_array
-    push!(problem_array, create_rosenbrock_ADNLPModel(i))
-    push!(problem_array, create_chained_wood_ADNLPModel(i))
-    push!(problem_array, create_chained_powel_ADNLPModel(i))
-    push!(problem_array, create_cragg_levy_ADNLPModel(i))
-    push!(problem_array, create_generalisation_brown_ADNLPModel(i))
-  end
-  return problem_array
-end
-
-"""
     first_criteria(n, obj, neval_grad, neval_Hv)
 Returns a kind of score = n_obj + 5*neval_grad + 5*neval_Hv. This criteria is a approximation of the cost of the function
 """
@@ -105,14 +70,12 @@ end
 
 println(" \n\n génération des problemes")
 # n_array = [100,500,1000,2000,5000,10000,25000,50000,100000]
-# n_array = [20,40,60,100,500, 1000, 2000]
-# n_array = [20,40,60]
-n_array = [1000,2000,5000, 10000]
-# n_array = [100,500,1000,2000,3000]
-# n_array = [1000,5000,10000,20000,50000,100000]
-# n_array = [100]
-problems = create_all_problems(n_array)
-problems2 = create_all_problems2(n_array)
+# n_array = [1000,2000,5000, 10000]
+# problems = create_all_problems(n_array)
+# problems2 = create_all_problems2(n_array)
+include("../../benchmark/scripts/generate_problems.jl")
+problems = create_JuMP_models()
+problems2 = create_ADNLP_models()
 
 
 println("\n\ndéfinition des solver\n\n")
@@ -127,44 +90,41 @@ const max_eval = 1500
 
 solver2 = Dict{Symbol,Function}(
   :trunk_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(prob; kwargs...),
-  :lsr1_adnlpmodel => (prob; kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...),
-  :lbfgs_adnlpmodel => (prob; kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)
+  :lsr1_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob);kwargs...),
+  :lbfgs_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob);kwargs...)
 )
 
 
 solver = Dict{Symbol,Function}(
 :trunk => ((prob;kwargs...) -> JSOSolvers.trunk(prob;kwargs...)),
 :trunk_lsr1 => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
+:trunk_lbfgs => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob); kwargs...),
 :trunk_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
-:my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
-:my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
+# :my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
+# :my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
 :p_bfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
 :p_sr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
 :p_bs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
-:p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
+# :p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
 )
 
 
-solver3 = Dict{Symbol,Function}(
-  :p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
-)
-stats3 = bmark_solvers(solver3, problems; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 
 
-
-keys_hess = [:trunk, :trunk_adnlpmodel, :trunk_SPS, :p_trunk]
-keys_bfgs = [ :lbfgs_adnlpmodel, :my_lbfgs, :p_bfgs]
-keys_sr1 =  [:trunk_lsr1, :lsr1_adnlpmodel, :my_lsr1, :p_sr1, :p_bs ]
+keys_hess = [:trunk, :trunk_adnlpmodel, :trunk_SPS]
+keys_bfgs = [:trunk_lbfgs, :lbfgs_adnlpmodel, :p_bfgs]
+keys_sr1 =  [:trunk_lsr1, :lsr1_adnlpmodel, :p_sr1, :p_bs ]
 
 
 
 #= Lancement du benchmark sur les problèmes générés, sur les solvers défini dans la variable solvers =#
-println("lancement des benchmmarks")
+println("lancement des benchmmarks ADNLPModel")
 #lancement de bmark_solver sur les ADNLPModels
 stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 #récupération des clés
 keys_stats2 = keys(stats2)
 
+println("lancement des benchmmarks NLPModelJuMP")
 #lancement de bmark_solver sur les NLPModelJUMP
 stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 
@@ -179,7 +139,6 @@ end
 
 
 println("affichage du profile des solvers par rapport au problèmes")
-
 # création des colonnes liés aux critères que j'ai défini
 keys_stats = keys(stats)
 for i in keys_stats
@@ -189,7 +148,6 @@ for i in keys_stats
 end
 
 #Construction de tables particulières pour chaque classe de solvers.
-
 stats_hess = Dict{Symbol,DataFrame}([])
 for i in keys_hess
   stats_hess[i] = stats[i]
@@ -304,3 +262,49 @@ savefig(p_thd_crit, repo_sr1 * "inverse_pourcentage_pas_accepte.pdf")
 
 
 println("Fin des écritures")
+
+
+
+
+#=
+ancien Code
+=#
+
+#
+# """
+#     create_all_problems(n)
+# Function that create the problem that I will use with bmark_solver. I use function to generate automaticaly some Models, theses are defined in other
+# files of the repo models. n Is the size of the problems. Trhis function generates NLPMoodelsJuMP.
+# """
+# function create_all_problems(nb_var_array :: Vector{Int})
+#   problem_array = []
+#   for i in nb_var_array
+#     push!(problem_array, create_rosenbrock_JuMPModel(i))
+#     push!(problem_array, create_chained_wood_JuMPModel(i))
+#     push!(problem_array, create_chained_powel_JuMPModel(i))
+#     push!(problem_array, create_cragg_levy_JuMPModel(i))
+#     push!(problem_array, create_generalisation_brown_JuMPModel(i))
+#   end
+#   return problem_array
+# end
+#
+#
+# """
+#     create_all_problems2(n)
+# Function that create the problem that I will use with bmark_solver. I use function to generate automaticaly some Models, theses are defined in other
+# files of the repo models. n Is the size of the problems. Trhis function generates RADNLPModels.
+# """
+# function create_all_problems2(nb_var_array :: Vector{Int})
+#   problem_array = []
+#   for i in nb_var_array
+#     push!(problem_array, create_rosenbrock_ADNLPModel(i))
+#     push!(problem_array, create_chained_wood_ADNLPModel(i))
+#     push!(problem_array, create_chained_powel_ADNLPModel(i))
+#     push!(problem_array, create_cragg_levy_ADNLPModel(i))
+#     push!(problem_array, create_generalisation_brown_ADNLPModel(i))
+#   end
+#   return problem_array
+# end
+# keys_hess = [:trunk, :trunk_adnlpmodel, :trunk_SPS, :p_trunk]
+# keys_bfgs = [ :lbfgs_adnlpmodel, :my_lbfgs, :p_bfgs]
+# keys_sr1 =  [:trunk_lsr1, :lsr1_adnlpmodel, :my_lsr1, :p_sr1, :p_bs ]
