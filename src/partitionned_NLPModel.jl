@@ -29,16 +29,16 @@ using FastClosures
         MathOptInterface.initialize(evaluator, [:ExprGraph])
         obj_Expr = MathOptInterface.objective_expr(evaluator) :: Expr
         n = model.moi_backend.model_cache.model.num_variables_created
-        x0 = nlp.meta.x0
+        x0 = model.meta.x0
         return PartionnedNLPModel(obj_Expr, n, x0)
     end
 
     function PartionnedNLPModel(obj :: T, n :: Int, x0 :: AbstractVector{Y}, t=Y :: DataType) where T where Y <: Number
         meta = NLPModelMeta(n,x0=x0)
-        temp_tree = CalculusTreeTools.transform_to_expr_tree(obj)
-        work_obj = CalculusTreeTools.create_complete_tree(temp_tree)
+        # temp_tree = CalculusTreeTools.transform_to_expr_tree(obj)
+        # work_obj = CalculusTreeTools.create_complete_tree(temp_tree)
 
-        s_a = alloc_struct_algo(work_obj, n :: Int, t :: DataType )
+        s_a = alloc_struct_algo(obj, n :: Int, t :: DataType )
 
         return PartionnedNLPModel{CalculusTreeTools.complete_expr_tree,t}(meta, s_a, Counters())
     end

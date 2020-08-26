@@ -21,7 +21,9 @@ for (mod, mod_AD) in problem_collection
 
 
   #= Définition des nlp modèles que nous allons comparer =#
+  println("\t Model JuMP")
   jump_nlp = NLPModelsJuMP.MathOptNLPModel(mod)
+  println("\t Model Partitonned")
   sps_nlp = PartiallySeparableSolvers.PartionnedNLPModel(jump_nlp)
 
   #= Définition des points que nous allons tester=#
@@ -35,8 +37,11 @@ for (mod, mod_AD) in problem_collection
   # définition des variables nécessaires
 
   #calcul de la fonction objectif
+  println("\t sps")
   SUITE["problem $cpt"]["obj"]["sps"] = @benchmarkable NLPModels.obj($sps_nlp, $x)
+  println("\t JuMP")
   SUITE["problem $cpt"]["obj"]["jump"] = @benchmarkable NLPModels.obj($jump_nlp, $x)
+  println("\t AD")
   SUITE["problem $cpt"]["obj"]["ad"] = @benchmarkable NLPModels.obj($mod_AD, $x)
 
 

@@ -1,4 +1,3 @@
-using OptimizationProblems, JuMP, ADNLPModels
 using NLPModelsJuMP
 
 
@@ -21,8 +20,11 @@ pas Partiellement séparable = power
 
 include("define_ADNLPModel.jl")
 
+using OptimizationProblems, JuMP, ADNLPModels
+
 function create_problems(n :: Int)
   problem_collection = Vector{Tuple{JuMP.Model,ADNLPModels.RADNLPModel}}(undef,0)
+
   push!(problem_collection, (OptimizationProblems.arwhead(n), arwhead_ADNLPModel(n)) )
   push!(problem_collection, (OptimizationProblems.bdqrtic(n), bdqrtic_ADNLPModel(n)) )
   push!(problem_collection, (OptimizationProblems.brybnd(n), brybnd_ADNLPModel(n)) )
@@ -144,16 +146,19 @@ function create_problems(n :: Int)
   return problem_collection
 end
 
-n = 10
-
+n = 2000
 @inline create_problems() = create_problems(n)
 
 
+test_vec = Vector{Int}(undef, 0)
+for i in 1:n
+  push!(test_vec, i)
+end
 # problems = create_problems()
 
 
 
-n_JuMP_ADNLP_Model = 5000
+n_JuMP_ADNLP_Model = 100
 
 function create_ADNLP_models(n :: Int)
   problem_collection = Vector{ADNLPModels.RADNLPModel}(undef,0)

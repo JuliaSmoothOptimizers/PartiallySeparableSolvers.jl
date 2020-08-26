@@ -246,7 +246,7 @@ p_thd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.inverse_po
 savefig(p_thd_crit, repo_bfgs * "inverse_pourcentage_pas_accepte.pdf")
 
 
-println("écriture des profiles BFGS like")
+println("écriture des profiles SR1 like")
 
 repo_sr1 = "src/comparaison/results/profiles/sr1_like/"
 p_iter = SolverBenchmark.performance_profile(stats_sr1, df -> df.iter)

@@ -226,7 +226,7 @@ function compute_ratio_no_mat(x :: AbstractVector{Y},
                       nlp :: AbstractNLPModel,
                       B :: AbstractLinearOperator{Y},
                       g :: AbstractVector{Y})  where Y <: Number
-    PartiallySeparableNLPModel.set_x_sps(nlp.s_a.sps, x)
+    PartiallySeparableNLPModel.set_x_sps!(nlp.s_a.sps, x)
     quad_model_s =  f_x + g' * s + 1/2 * ((B * s )' * s)  :: Y
     f_next_x = NLPModels.obj(nlp, x+s) :: Y
     num = f_x - f_next_x :: Y
@@ -306,7 +306,7 @@ function solver_TR_CG_Ab_NLP_Trunk(nlp :: PartionnedNLPModel{T,Y};
         cpt = cpt + 1
 
         #on set x à l'avance pour pouvoir réaliser le produit Hv via le LinearOperator seulement en fonction de v
-        PartiallySeparableNLPModel.set_x_sps(nlp.s_a.sps, x)
+        PartiallySeparableNLPModel.set_x_sps!(nlp.s_a.sps, x)
         cg_res = Krylov.cg( B(nlp), - g, atol=T2(atol), rtol=cgtol, radius = Δ, itmax=max(2 * n, 50))
 
 

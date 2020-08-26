@@ -38,8 +38,16 @@ n = 100
 obj_expr_tree = CalculusTreeTools.transform_to_expr_tree(obj)
 Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj, n)
 
-JuMP_mod = MathOptNLPModel(m_ros, name="Ros "*string(n))
+JuMP_nlp = MathOptNLPModel(m_ros, name="Ros "*string(n))
 
+# p_nlp = PartiallySeparableSolvers.PartionnedNLPModel(JuMP_nlp)
+#
+# using NLPModels
+# x = ones(n)
+# bench = @benchmark NLPModels.obj(p_nlp, x)
+# bench_jump = @benchmark NLPModels.obj(JuMP_nlp, x)
+#
+# error("stop")
 
 
 
@@ -91,40 +99,21 @@ x = create_initial_point_Rosenbrock(n)
 end
 
 
-# PartiallySeparableSolvers.solver_TR_PSR1!(obj, n, x)
-# PartiallySeparableSolvers.solver_TR_PSR1!(obj_expr_tree, n, x)
-# PartiallySeparableSolvers.solver_TR_PBFGS!(obj, n, x)
-# PartiallySeparableSolvers.solver_TR_PBFGS!(obj_expr_tree, n, x)
-
-# nlp = PartiallySeparableSolvers.PartionnedNLPModel(obj, n ,typeof(x[1]))
-# res_obj = NLPModels.obj(nlp, x)
-# g = similar(x)
-# NLPModels.grad!(nlp, x, g)
-# @show res_obj, g
+println("Partitionned nlp model")
+sps_nlp = PartiallySeparableSolvers.PartionnedNLPModel(JuMP_nlp)
+println(" fin Partitionned nlp model")
 
 
-sps_nlp = PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod)
+ges1 = PBFGS(JuMP_nlp)
+ges2 = PSR1(JuMP_nlp)
+ges3 = my_LBFGS(JuMP_nlp)
+ges4 = my_LSR1(JuMP_nlp)
+ges5 = PBS(JuMP_nlp)
+ges6 = PTRUNK(JuMP_nlp)
+ges7 = JSOSolvers.trunk(JuMP_nlp)
+ges8 = JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_nlp))
 
-NLPModels.obj(sps_nlp, x)
-
-# error("fin")
-
-ges9 = PartiallySeparableSolvers.PTRUNK(JuMP_mod)
-
-# error("fin")
-ges8 = JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod))
-# Juno.@run JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(JuMP_mod))
-ges7 = JSOSolvers.trunk(JuMP_mod)
-# error("end")
-ges6 = PTRUNK(JuMP_mod)
-
-ges2 = PSR1(JuMP_mod)
-ges1 = PBFGS(JuMP_mod)
-ges4 = my_LSR1(JuMP_mod)
-ges3 = my_LBFGS(JuMP_mod)
-ges5 = PBS(JuMP_mod)
-
-ges = [ges1,ges2,ges3,ges4, ges5, ges6]
+ges = [ges1,ges2,ges3,ges4, ges5, ges6, ges7, ges8]
 MOI_gradient = Vector{typeof(x[1])}(undef,n)
 ges_grad = []
 for i in ges
@@ -149,5 +138,5 @@ check_nrm = (nrm_grad -> nrm_grad < 1e-6 * norm(grad_init) )
 #
 # n = 25000
 # (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
-# JuMP_mod = MathOptNLPModel(m_ros, name="Ros "*string(n))
-# @time PBFGS(JuMP_mod)
+# JuMP_nlp = MathOptNLPModel(m_ros, name="Ros "*string(n))
+# @time PBFGS(JuMP_nlp)
