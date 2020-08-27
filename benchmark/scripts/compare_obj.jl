@@ -32,18 +32,24 @@ for (mod, mod_AD) in problem_collection
 
   SUITE["problem $cpt"] = BenchmarkGroup()
   SUITE["problem $cpt"] = BenchmarkGroup()
-  SUITE["problem $cpt"]["obj"] = BenchmarkGroup()
+  # SUITE["problem $cpt"]["obj"] = BenchmarkGroup()
+  SUITE["problem $cpt"]["jump"] = BenchmarkGroup()
+  SUITE["problem $cpt"]["ad"] = BenchmarkGroup()
+  SUITE["problem $cpt"]["sps"] = BenchmarkGroup()
 
   # définition des variables nécessaires
 
   #calcul de la fonction objectif
   println("\t sps")
-  SUITE["problem $cpt"]["obj"]["sps"] = @benchmarkable NLPModels.obj($sps_nlp, $x)
+  SUITE["problem $cpt"]["sps"] = @benchmarkable NLPModels.obj($sps_nlp, $x)
   println("\t JuMP")
-  SUITE["problem $cpt"]["obj"]["jump"] = @benchmarkable NLPModels.obj($jump_nlp, $x)
+  SUITE["problem $cpt"]["jump"] = @benchmarkable NLPModels.obj($jump_nlp, $x)
   println("\t AD")
-  SUITE["problem $cpt"]["obj"]["ad"] = @benchmarkable NLPModels.obj($mod_AD, $x)
+  SUITE["problem $cpt"]["ad"] = @benchmarkable NLPModels.obj($mod_AD, $x)
 
+  # SUITE["problem $cpt"]["obj"]["sps"] = @benchmarkable NLPModels.obj($sps_nlp, $x)
+  # SUITE["problem $cpt"]["obj"]["ad"] = @benchmarkable NLPModels.obj($sps_nlp, $x)
+  # SUITE["problem $cpt"]["obj"]["jump"] = @benchmarkable NLPModels.obj($sps_nlp, $x)
 
   global cpt += 1
 end

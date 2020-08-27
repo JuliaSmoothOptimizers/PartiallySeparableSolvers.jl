@@ -32,3 +32,6 @@ src/comparaison/file_dataframe/**
 benchmark/profiles/profiles.7z
 benchmark/profiles/**
 benchmark/profiles/archive/**
+benchmark/archive/**
+
+test/dvpt_folder/**

@@ -89,31 +89,31 @@ const max_eval = 1500
 
 
 solver2 = Dict{Symbol,Function}(
-  :trunk_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(prob; kwargs...),
-  :lsr1_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob);kwargs...),
-  :lbfgs_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob);kwargs...)
+  :trunk_Hv_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(prob; kwargs...),
+  :trunk_lsr1_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob);kwargs...),
+  :trunk_lbfgs_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob);kwargs...)
 )
 
 
 solver = Dict{Symbol,Function}(
-:trunk => ((prob;kwargs...) -> JSOSolvers.trunk(prob;kwargs...)),
-:trunk_lsr1 => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
-:trunk_lbfgs => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob); kwargs...),
-:trunk_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
+:trunk_Hv_JuMP => ((prob;kwargs...) -> JSOSolvers.trunk(prob;kwargs...)),
+:trunk_lsr1_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
+:trunk_lbfgs_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob); kwargs...),
+:trunk_Hv_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
 # :my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
 # :my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
-:p_bfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
-:p_sr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
-:p_bs => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
+:bfgs_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
+:sr1_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
+:bs_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
 # :p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
 )
 
 
 
 
-keys_hess = [:trunk, :trunk_adnlpmodel, :trunk_SPS]
-keys_bfgs = [:trunk_lbfgs, :lbfgs_adnlpmodel, :p_bfgs]
-keys_sr1 =  [:trunk_lsr1, :lsr1_adnlpmodel, :p_sr1, :p_bs ]
+keys_hess = [:trunk_Hv_JuMP, :trunk_Hv_adnlpmodel, :trunk_Hv_SPS]
+keys_bfgs = [:trunk_lbfgs_JuMP, :trunk_lbfgs_adnlpmodel, :bfgs_SPS]
+keys_sr1 =  [:trunk_lsr1_JuMP, :trunk_lsr1_adnlpmodel, :sr1_SPS, :bs_SPS ]
 
 
 
@@ -168,7 +168,7 @@ println("affichage des tables")
 selected_fields = [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :obj_5grad_5Hv, :time_sur_obj_5grad_5Hv, :inverse_pourcentage_pas_accepte]
 for i in keys_stats
   println(stdout, "\n\n\n" * string(i) )
-  markdown_table(stdout, stats[i], cols=selected_fields)
+  pretty_stats(stdout, stats[i][!, [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod]], tf=markdown)
 end
 
 #= Ecriture des résultats dans un fichier au format markdown=#
@@ -180,7 +180,8 @@ io = open(location_md,"w+")
 
 for i in keys_stats
   println(io, "\n\n\n" * string(i) )
-  markdown_table(io, stats[i], cols=selected_fields)
+  # markdown_table(io, stats[i], cols=selected_fields)
+  pretty_stats(io, stats[i][!, [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod]], tf=markdown)
 end
 close(io)
 
@@ -194,7 +195,7 @@ close(io)
 io = open(location_latex,"w+")
 for i in keys_stats
   println(io, "\n\n\n" * string(i) )
-  latex_table(io, stats[i], cols=selected_fields)
+  pretty_latex_stats(io, stats[i][!, [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod]])
 end
 close(io)
 
