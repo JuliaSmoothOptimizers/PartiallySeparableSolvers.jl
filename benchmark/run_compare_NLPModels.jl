@@ -15,12 +15,10 @@ ENV["GKSwstype"]=100
 println("début")
 #comparaison de obj
 results_obj = PkgBenchmark.benchmarkpkg("PartiallySeparableSolvers", script="benchmark/scripts/compare_obj.jl")
-@show typeof(results_obj)
 p_obj = profile_solvers(results_obj)
 savefig(p_obj, "benchmark/profiles/profile_obj.pdf")
 println("fin obj")
 
-error("stop")
 
 println("début grad")
 #comparaison de grad!

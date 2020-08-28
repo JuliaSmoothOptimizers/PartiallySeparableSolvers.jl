@@ -2,11 +2,7 @@ using BenchmarkTools
 using JuMP, MathOptInterface
 using NLPModels, NLPModelsJuMP
 
-
 using PartiallySeparableSolvers
-using PartiallySeparableNLPModel
-using CalculusTreeTools
-using NLPModels, NLPModelsJuMP
 
 include("generate_problems.jl")
 

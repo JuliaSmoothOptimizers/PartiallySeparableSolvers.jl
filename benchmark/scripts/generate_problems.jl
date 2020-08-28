@@ -158,7 +158,7 @@ end
 
 
 
-n_JuMP_ADNLP_Model = 1000
+n_JuMP_ADNLP_Model = 100
 
 function create_ADNLP_models(n :: Int)
   problem_collection = Vector{ADNLPModels.RADNLPModel}(undef,0)
