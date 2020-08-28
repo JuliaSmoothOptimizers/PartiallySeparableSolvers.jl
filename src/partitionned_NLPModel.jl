@@ -35,9 +35,6 @@ using FastClosures
 
     function PartionnedNLPModel(obj :: T, n :: Int, x0 :: AbstractVector{Y}, t=Y :: DataType) where T where Y <: Number
         meta = NLPModelMeta(n,x0=x0)
-        # temp_tree = CalculusTreeTools.transform_to_expr_tree(obj)
-        # work_obj = CalculusTreeTools.create_complete_tree(temp_tree)
-
         s_a = alloc_struct_algo(obj, n :: Int, t :: DataType )
 
         return PartionnedNLPModel{CalculusTreeTools.complete_expr_tree,t}(meta, s_a, Counters())

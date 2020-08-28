@@ -208,15 +208,18 @@ end
 
 #fonction traitant le coeur de l'algorithme, réalise principalement la boucle qui incrémente un compteur et met à jour la structure d'algo par effet de bord
 # De plus on effectue tous les affichage par itération dans cette fonction raison des printf
-iterations_TR_PSR1!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}; kwargs...) where T where Y <: Number = (vec_cpt[1] = iterations_TR_PSR1!(s_a; kwargs...))
-function iterations_TR_PSR1!(s_a :: struct_algo{T,Y};
+iterations_TR_PSR1!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}, start_time :: Float64; kwargs...) where T where Y <: Number = begin  (cpt, elapsed_time) = iterations_TR_PSR1!(s_a, start_time; kwargs...); vec_cpt[1] = cpt ; return (vec_cpt[1], elapsed_time) end
+function iterations_TR_PSR1!(s_a :: struct_algo{T,Y},
+    start_time :: Float64;
     max_eval :: Int=10000,
     atol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
     rtol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
+    max_time :: Float64=30.0,
     kwargs... )  where T where Y <: Number
 
     cpt = 1 :: Int64
     n = s_a.sps.n_var
+    elapsed_time = 0.0
 
     T2 = eltype(s_a.tpl_x[Int(s_a.index)])
     ∇f₀ = s_a.grad
@@ -227,13 +230,13 @@ function iterations_TR_PSR1!(s_a :: struct_algo{T,Y};
     opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
 
-    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval )
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elapsed_time < max_time
         update_PSR1!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
         if mod(cpt,500) == 0
             @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
         end
-
+        elapsed_time = time() - start_time
     end
 
     if cpt < max_eval
@@ -248,7 +251,7 @@ function iterations_TR_PSR1!(s_a :: struct_algo{T,Y};
         println("---------------------------------------------------------------------------------------------------------\n\n\n")
     end
 
-    return cpt
+    return (cpt, elapsed_time)
 end
 
 
@@ -258,22 +261,19 @@ end
 Trust region method using the gradient conjugate method and the Partially Separable Structure of the problem of the parameters. This method use
 SR1 approximation.
 """
+
 solver_TR_PSR1!(m :: T; kwargs...) where T <: AbstractNLPModel = _solver_TR_PSR1!(m; kwargs... )
-# solver_TR_PSR1!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number = _solver_TR_PSR1!(obj_Expr, n, x_init, trait_expr_tree.is_expr_tree(T), type; kwargs...)
-# _solver_TR_PSR1!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, :: trait_expr_tree.type_expr_tree, type=Float64 :: DataType; kwargs...) where T where Y <: Number = _solver_TR_PSR1!(obj_Expr, n, x_init, type; kwargs...)
-# _solver_TR_PSR1!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, :: trait_expr_tree.type_not_expr_tree, type=Float64 :: DataType; kwargs...) where T where Y <: Number = error("mal typé")
 solver_TR_PSR1!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number = _solver_TR_PSR1!(obj_Expr, n, x_init, type; kwargs...)
 function _solver_TR_PSR1!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number
-    # work_obj = trait_expr_tree.transform_to_expr_tree(obj_Expr) :: implementation_expr_tree.t_expr_tree
-    # work_obj = CalculusTreeTools.transform_to_expr_tree(obj_Expr) :: CalculusTreeTools.type_calculus_tree
-    work_obj = CalculusTreeTools.transform_to_expr_tree(obj_Expr)
-    # s_a = alloc_struct_algo(work_obj, n :: Int, type :: DataType ) :: struct_algo{implementation_expr_tree.t_expr_tree, type}
-    s_a = alloc_struct_algo(work_obj, n :: Int, type :: DataType )
+
+    s_a = alloc_struct_algo(obj_Expr, n :: Int, type :: DataType )
     init_struct_algo!(s_a, x_init)
     pointer_cpt = Array{Int}([0])
+    start_time = time()
+
 
     # try
-        cpt = iterations_TR_PSR1!(s_a, pointer_cpt; kwargs...)
+        (cpt, elapsed_time) = iterations_TR_PSR1!(s_a, pointer_cpt, start_time; kwargs...)
     # catch e
     #     @show e
     #     return (zeros(n),s_a,0)
@@ -281,18 +281,22 @@ function _solver_TR_PSR1!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, 
 
     cpt = pointer_cpt[1]
     x_final = s_a.tpl_x[Int(s_a.index)]
-    # return (x_final, s_a, cpt) :: Tuple{Vector{Y}, struct_algo{implementation_expr_tree.t_expr_tree, type}, Int}
-    return (x_final, s_a, cpt) :: Tuple{Vector{Y}, struct_algo, Int}
+    return (x_final, s_a, cpt, elapsed_time) :: Tuple{Vector{Y}, struct_algo, Int, Float64}
 end
 
-function _solver_TR_PSR1_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y}; max_eval :: Int=10000, kwargs...) where T where Y where Z <: AbstractNLPModel
-    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PSR1!(obj_Expr, n, x_init, type; max_eval=max_eval, kwargs...))
+function _solver_TR_PSR1_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y};
+    max_eval :: Int=10000,
+    max_time :: Float64=30.0,
+    kwargs...) where T where Y where Z <: AbstractNLPModel
+    (x_final, s_a, cpt, elapsed_time) = solver_TR_PSR1!(obj_Expr, n, x_init, type; max_eval=max_eval, max_time=max_time, kwargs...)
     nrm_grad = norm(NLPModels.grad(m, x_final),2)
     nrm_grad_init = norm(NLPModels.grad(m, x_init),2)
     if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
         status = :first_order
     elseif cpt >= max_eval
         status = :max_eval
+    elseif elapsed_time > max_time
+        status = :max_time
     else
         status = :unknown
     end
@@ -303,7 +307,7 @@ function _solver_TR_PSR1_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_
                            iter = cpt,  # not quite the number of iterations!
                            dual_feas = nrm_grad,
                            objective = NLPModels.obj(m, x_final),
-                           elapsed_time = Δt[2],
+                           elapsed_time = elapsed_time,
                           )
 end
 
@@ -376,15 +380,19 @@ end
 
 #fonction traitant le coeur de l'algorithme, réalise principalement la boucle qui incrémente un compteur et met à jour la structure d'algo par effet de bord
 # De plus on effectue tous les affichage par itération dans cette fonction raison des printf
-iterations_TR_PBGFS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}; kwargs...) where T where Y <: Number = (vec_cpt[1] = iterations_TR_PBGFS!(s_a; kwargs...))
-function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y};
+iterations_TR_PBGFS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}, start_time :: Float64; kwargs...) where T where Y <: Number = begin  (cpt, elapsed_time) = iterations_TR_PBGFS!(s_a, start_time; kwargs...); vec_cpt[1] = cpt ; return (vec_cpt[1], elapsed_time) end
+function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y},
+        start_time :: Float64;
         max_eval :: Int=10000,
+        max_time :: Float64=30.0,
         atol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
         rtol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
         kwargs... )  where T where Y <: Number
 
+
     cpt = 1 :: Int64
     n = s_a.sps.n_var
+    elasped_time = 0.0
 
     T2 = eltype(s_a.tpl_x[Int(s_a.index)])
     ∇f₀ = s_a.grad
@@ -393,15 +401,15 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y};
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
     opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
-    @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
+    @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
-    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval )
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elasped_time < max_time
         update_PBGS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
         if mod(cpt,500) == 0
             @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
         end
-
+        elasped_time = time() - start_time
     end
 
     if cpt < max_eval
@@ -416,7 +424,7 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y};
         println("---------------------------------------------------------------------------------------------------------\n\n\n")
     end
 
-    return cpt
+    return (cpt, elasped_time)
 end
 
 
@@ -426,37 +434,38 @@ Trust region method using the gradient conjugate method and the Partially Separa
 BFGS approximation.
 """
 solver_TR_PBFGS!(m :: T;  kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBFGS!(m; kwargs... )
-# solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType ; kwargs...) where T where Y <: Number = _solver_TR_PBFGS!(obj_Expr, n, x_init, trait_expr_tree.is_expr_tree(T), type; kwargs...)
-# _solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, :: trait_expr_tree.type_expr_tree, type=Float64 :: DataType; kwargs...) where T where Y <: Number = _solver_TR_PBFGS!(obj_Expr, n, x_init, type; kwargs...)
-# _solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, :: trait_expr_tree.type_not_expr_tree, type=Float64 :: DataType; kwargs...) where T where Y <: Number = error("mal typé")
 solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType ; kwargs...) where T where Y <: Number = _solver_TR_PBFGS!(obj_Expr, n, x_init, type; kwargs...)
 function _solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number
-    # work_obj = trait_expr_tree.transform_to_expr_tree(obj_Expr) :: implementation_expr_tree.t_expr_tree
-    work_obj = CalculusTreeTools.transform_to_expr_tree(obj_Expr)
-    # s_a = alloc_struct_algo(work_obj, n :: Int, type :: DataType ) :: struct_algo{CalculusTreeTools.type_calculus_tree, type}
-    s_a = alloc_struct_algo(work_obj, n :: Int, type :: DataType )
+    s_a = alloc_struct_algo(obj_Expr, n :: Int, type :: DataType )
     init_struct_algo!(s_a, x_init)
     pointer_cpt = Array{Int}([0])
-    try
-        cpt = iterations_TR_PBGFS!(s_a, pointer_cpt; kwargs...)
-    catch e
-        @show e
-        return (zeros(n),s_a,-1)
-    end
+    start_time = time()
+    # try
+        (cpt, elapsed_time) = iterations_TR_PBGFS!(s_a, pointer_cpt, start_time; kwargs...)
+    # catch e
+    #     @show e
+    #     return (zeros(n),s_a,-1)
+    # end
     cpt = pointer_cpt[1]
     x_final = s_a.tpl_x[Int(s_a.index)]
-    return (x_final, s_a, cpt) :: Tuple{Vector{Y}, struct_algo, Int}
+    return (x_final, s_a, cpt, elapsed_time) :: Tuple{Vector{Y}, struct_algo, Int, Float64}
 end
 
 
-function _solver_TR_PBFGS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y}; max_eval :: Int=10000, kwargs...) where T where Y where Z <: AbstractNLPModel
-    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBFGS!(obj_Expr, n, x_init, type; max_eval=max_eval, kwargs...))
+function _solver_TR_PBFGS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y};
+        max_eval :: Int=10000,
+        max_time :: Float64=30.0,
+        kwargs...) where T where Y where Z <: AbstractNLPModel
+
+    (x_final, s_a, cpt, elapsed_time) = solver_TR_PBFGS!(obj_Expr, n, x_init, type; max_eval=max_eval, max_time = max_time, kwargs...)
     nrm_grad = norm(NLPModels.grad(m, x_final),2)
     nrm_grad_init = norm(NLPModels.grad(m, x_init),2)
     if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
         status = :first_order
     elseif cpt >= max_eval
         status = :max_eval
+    elseif elapsed_time > max_time
+        status = :max_time
     else
         status = :unknown
     end
@@ -467,7 +476,7 @@ function _solver_TR_PBFGS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x
                            iter = cpt,  # not quite the number of iterations!
                            dual_feas = nrm_grad,
                            objective = NLPModels.obj(m, x_final),
-                           elapsed_time = Δt[2],
+                           elapsed_time = elapsed_time,
                           )
 end
 
@@ -539,13 +548,16 @@ end
 
 #fonction traitant le coeur de l'algorithme, réalise principalement la boucle qui incrémente un compteur et met à jour la structure d'algo par effet de bord
 # De plus on effectue tous les affichage par itération dans cette fonction raison des printf
-iterations_TR_PBS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}; kwargs...) where T where Y <: Number = (vec_cpt[1] = iterations_TR_PBS!(s_a; kwargs...))
-function iterations_TR_PBS!(s_a :: struct_algo{T,Y};
+iterations_TR_PBS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}, start_time :: Float64; kwargs...) where T where Y <: Number = begin  (cpt, elapsed_time) = iterations_TR_PBS!(s_a, start_time; kwargs...); vec_cpt[1] = cpt ; return (vec_cpt[1], elapsed_time) end
+function iterations_TR_PBS!(s_a :: struct_algo{T,Y},
+        start_time :: Float64;
         max_eval :: Int=10000,
+        max_time :: Float64=30.0,
         atol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
         rtol :: Real=√eps(eltype(s_a.tpl_x[Int(s_a.index)])),
         kwargs... )  where T where Y <: Number
 
+    elapsed_time = 0.0
     cpt = 1 :: Int64
     n = s_a.sps.n_var
 
@@ -558,13 +570,13 @@ function iterations_TR_PBS!(s_a :: struct_algo{T,Y};
     opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
-    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval )
+    while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elapsed_time < max_time
         update_PBS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
         if mod(cpt,500) == 0
             @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
         end
-
+        elapsed_time = time() - start_time
     end
 
     if cpt < max_eval
@@ -579,38 +591,44 @@ function iterations_TR_PBS!(s_a :: struct_algo{T,Y};
         println("---------------------------------------------------------------------------------------------------------\n\n\n")
     end
 
-    return cpt
+    return (cpt, elapsed_time)
 end
 
 
 solver_TR_PBS!(m :: T;  kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBS!(m; kwargs... )
 solver_TR_PBS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType ; kwargs...) where T where Y <: Number = _solver_TR_PBS!(obj_Expr, n, x_init, type; kwargs...)
 function _solver_TR_PBS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number
-    temp_tree = CalculusTreeTools.transform_to_expr_tree(obj_Expr)
-    work_obj = CalculusTreeTools.create_complete_tree(temp_tree)
-    s_a = alloc_struct_algo(work_obj, n :: Int, type :: DataType )
+    s_a = alloc_struct_algo(obj_Expr, n :: Int, type :: DataType )
     init_struct_algo!(s_a, x_init)
     pointer_cpt = Array{Int}([0])
+
+    start_time = time()
     # try
-        cpt = iterations_TR_PBS!(s_a, pointer_cpt; kwargs...)
+        (cpt, elapsed_time) = iterations_TR_PBS!(s_a, pointer_cpt, start_time; kwargs...)
     # catch e
     #     @show e
     #     return (zeros(n),s_a,-1)
     # end
     cpt = pointer_cpt[1]
     x_final = s_a.tpl_x[Int(s_a.index)]
-    return (x_final, s_a, cpt) :: Tuple{Vector{Y}, struct_algo, Int}
+    return (x_final, s_a, cpt, elapsed_time) :: Tuple{Vector{Y}, struct_algo, Int, Float64}
 end
 
 
-function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y}; max_eval :: Int=10000, kwargs...) where T where Y where Z <: AbstractNLPModel
-    Δt = @timed ((x_final, s_a, cpt) = solver_TR_PBS!(obj_Expr, n, x_init, type; max_eval=max_eval, kwargs...))
+function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_init :: AbstractVector{Y};
+        max_eval :: Int=10000,
+        max_time :: Float64=30.0,
+        kwargs...) where T where Y where Z <: AbstractNLPModel
+
+    (x_final, s_a, cpt, elapsed_time) = solver_TR_PBS!(obj_Expr, n, x_init, type; max_eval=max_eval, max_time=max_time, kwargs...)
     nrm_grad = norm(NLPModels.grad(m, x_final),2)
     nrm_grad_init = norm(NLPModels.grad(m, x_init),2)
     if nrm_grad < nrm_grad_init*1e-6 || nrm_grad < 1e-6
         status = :first_order
     elseif cpt >= max_eval
         status = :max_eval
+    elseif elapsed_time > max_time
+        status = :max_time
     else
         status = :unknown
     end
@@ -621,7 +639,7 @@ function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_i
                            iter = cpt,  # not quite the number of iterations!
                            dual_feas = nrm_grad,
                            objective = NLPModels.obj(m, x_final),
-                           elapsed_time = Δt[2],
+                           elapsed_time = elapsed_time,
                           )
 end
 

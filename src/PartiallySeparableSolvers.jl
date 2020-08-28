@@ -33,6 +33,7 @@ module PartiallySeparableSolvers
 
     export PBFGS, PSR1, PBS, PTRUNK
     export my_LBFGS, my_LSR1
+    export PartionnedNLPModel
 
     # export test_Partitionned_NLPModel
 

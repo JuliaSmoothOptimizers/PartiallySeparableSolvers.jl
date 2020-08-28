@@ -127,16 +127,7 @@ MathOptInterface.eval_objective_gradient(evaluator, grad_init, create_initial_po
 check_nrm = (nrm_grad -> nrm_grad < 1e-6 * norm(grad_init) )
 
 
+# show_obj(ges) =println(ges.objective)
+# map(show_obj, ges)
 @test ges1.objective < 1e-5 && ges2.objective < 4 && ges3.objective < 1e-5 && ges4.objective < 1e-4
 @test foldl( ( (x,y) -> x && y ), check_nrm.(ges_nrm_grad))
-
-# MathOptInterface.eval_objective(evaluator, ges1.solution)
-# MathOptInterface.eval_objective(evaluator, ges2.solution)
-# MathOptInterface.eval_objective_gradient()
-
-# println("fin des test classique éxécution à 25k var")
-#
-# n = 25000
-# (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
-# JuMP_nlp = MathOptNLPModel(m_ros, name="Ros "*string(n))
-# @time PBFGS(JuMP_nlp)
