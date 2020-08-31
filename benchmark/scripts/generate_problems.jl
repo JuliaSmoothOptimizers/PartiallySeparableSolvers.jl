@@ -146,7 +146,7 @@ function create_problems(n :: Int)
   return problem_collection
 end
 
-n = 50
+n = 1000
 @inline create_problems() = create_problems(n)
 
 
