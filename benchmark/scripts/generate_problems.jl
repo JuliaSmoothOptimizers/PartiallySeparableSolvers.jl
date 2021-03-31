@@ -146,7 +146,7 @@ function create_problems(n :: Int)
   return problem_collection
 end
 
-n = 1000
+n = 10000
 @inline create_problems() = create_problems(n)
 
 
@@ -158,7 +158,7 @@ end
 
 
 
-n_JuMP_ADNLP_Model = 100
+n_JuMP_ADNLP_Model = 1000
 
 function create_ADNLP_models(n :: Int)
   problem_collection = Vector{ADNLPModels.RADNLPModel}(undef,0)

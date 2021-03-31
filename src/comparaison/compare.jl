@@ -1,14 +1,6 @@
-repo_model = "models/"
-include(repo_model * "chained_wood.jl")
-include( repo_model * "rosenbrock.jl")
-include( repo_model * "chained_powel.jl")
-include( repo_model * "chained_cragg_levy.jl")
-include( repo_model * "generalisation_Brown.jl")
-
-
-
 using JSOSolvers, SolverBenchmark, SolverTools, Plots, Printf, DataFrames, NLPModels
 using ADNLPModels
+using ProfileView
 using PartiallySeparableSolvers
 
 
@@ -73,7 +65,8 @@ println(" \n\n génération des problemes")
 # n_array = [1000,2000,5000, 10000]
 # problems = create_all_problems(n_array)
 # problems2 = create_all_problems2(n_array)
-include("../../benchmark/scripts/generate_problems.jl")
+current_path = pwd()
+include(current_path * "/benchmark/scripts/generate_problems.jl")
 problems = create_JuMP_models()
 problems2 = create_ADNLP_models()
 
@@ -116,17 +109,37 @@ keys_bfgs = [:trunk_lbfgs_JuMP, :trunk_lbfgs_adnlpmodel, :bfgs_SPS]
 keys_sr1 =  [:trunk_lsr1_JuMP, :trunk_lsr1_adnlpmodel, :sr1_SPS, :bs_SPS ]
 
 
+#test
+# for problem in problems
+#   @show problem.meta.name
+#   time = @timed PartiallySeparableSolvers.PartionnedNLPModel(problem)
+#   @show time.time
+#   JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(problem); max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+#   PartiallySeparableSolvers.PBFGS(problem; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+#   PartiallySeparableSolvers.PSR1(problem; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+#   PartiallySeparableSolvers.PBS(problem; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+# end
+
+# @code_warntype JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(problems[2]); max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+# ProfileView.@profview JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(problems[3]); max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+
+
+
+# error("fin")
+
 
 #= Lancement du benchmark sur les problèmes générés, sur les solvers défini dans la variable solvers =#
-println("lancement des benchmmarks ADNLPModel")
-#lancement de bmark_solver sur les ADNLPModels
-stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-#récupération des clés
-keys_stats2 = keys(stats2)
 
 println("lancement des benchmmarks NLPModelJuMP")
 #lancement de bmark_solver sur les NLPModelJUMP
 stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+
+println("lancement des benchmmarks ADNLPModel")
+#lancement de bmark_solver sur les ADNLPModels
+stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+
+#récupération des clés
+keys_stats2 = keys(stats2)
 
 #on ajoute les Dataframes de stats2 à stats
 for i in keys_stats2
@@ -207,7 +220,8 @@ ENV["GKSwstype"]=100
 
 println("écriture de tous les profiles")
 p_iter = SolverBenchmark.performance_profile(stats, df -> df.iter)
-savefig(p_iter, "src/comparaison/results/profiles/iter_profile.pdf")
+savefig(p_iter, "src/comparaison/results/profiles/iter_
+profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats, df -> df.elapsed_time)
 savefig(p_time, "src/comparaison/results/profiles/time_profile.pdf")
 p_fst_crit = SolverBenchmark.performance_profile(stats, df -> df.obj_5grad_5Hv)

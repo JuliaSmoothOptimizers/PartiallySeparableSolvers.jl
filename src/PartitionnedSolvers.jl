@@ -302,7 +302,8 @@ function _solver_TR_PSR1_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_
     end
     m.counters.neval_obj = s_a.n_eval_obj
     m.counters.neval_grad = s_a.n_eval_grad
-    return GenericExecutionStats(status, m,
+		# attention renvoie de s_a ajouter pour pouvoir former les matrices.
+    return s_a, GenericExecutionStats(status, m,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!
                            dual_feas = nrm_grad,
@@ -471,7 +472,8 @@ function _solver_TR_PBFGS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x
     end
     m.counters.neval_obj = s_a.n_eval_obj
     m.counters.neval_grad = s_a.n_eval_grad
-    return GenericExecutionStats(status, m,
+    # return GenericExecutionStats(status, m,
+    return s_a, GenericExecutionStats(status, m,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!
                            dual_feas = nrm_grad,
@@ -634,7 +636,7 @@ function _solver_TR_PBS_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_i
     end
     m.counters.neval_obj = s_a.n_eval_obj
     m.counters.neval_grad = s_a.n_eval_grad
-    return GenericExecutionStats(status, m,
+    return s_a, GenericExecutionStats(status, m,
                            solution = x_final,
                            iter = cpt,  # not quite the number of iterations!
                            dual_feas = nrm_grad,
