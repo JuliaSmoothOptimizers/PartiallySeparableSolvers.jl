@@ -16,13 +16,13 @@ to the SR1 update method.
         ω = 1e-8
         @inbounds @fastmath v = y - B * Δx :: Vector{Y}
 
-        @fastmath @inbounds cond_left = abs( Δx' * v )
-        @fastmath @inbounds cond_right = ω * norm(Δx,2) * norm(v,2)
-        @fastmath @inbounds cond = (cond_left > cond_right) :: Bool
+        @fastmath cond_left = abs( Δx' * v )
+        @fastmath cond_right = ω * norm(Δx,2) * norm(v,2)
+        @fastmath cond = (cond_left > cond_right) :: Bool
 
         if cond
-            @fastmath @inbounds num = Array{Y,2}( v * v')
-            @fastmath @inbounds den = (v' * Δx) :: Y
+            @fastmath num = Array{Y,2}( v * v')
+            @fastmath den = (v' * Δx) :: Y
             @fastmath num_den = num/den
             @fastmath @inbounds B_1[:] = (B + num_den) :: Array{Y,2}
         else
@@ -49,12 +49,12 @@ to the BFGS update method.
                         B_1 :: AbstractArray{Y,2}) where Y <: Number #Array that will store the next approximation of the Hessian
 
         if (Δx' * y > 0 )
-            @fastmath @inbounds α = 1 / (y' * Δx)
-            @fastmath @inbounds β = - (1 / (Δx' * B * Δx) )
-            @fastmath @inbounds u = y
-            @fastmath @inbounds v = B * Δx
-            @fastmath @inbounds terme1 = (α * u * u')
-            @fastmath @inbounds terme2 = (β * v * v')
+            @fastmath α = 1 / (y' * Δx)
+            @fastmath β = - (1 / (Δx' * B * Δx) )
+            @fastmath u = y
+            @fastmath v = B * Δx
+            @fastmath terme1 = (α * u * u')
+            @fastmath terme2 = (β * v * v')
             @fastmath @inbounds B_1[:] = (B + terme1 + terme2) :: Array{Y,2}
         else
             @inbounds B_1[:] = B :: Array{Y,2}
@@ -129,7 +129,7 @@ the update, we need the grad_vector y and the vector s. B, B_1 and y use structu
     for i in 1:l_elmt_fun
         elmt_fun = sps.structure[i]
         status = PartiallySeparableNLPModel.get_convexity_status(elmt_fun)
-        @inbounds s_elem = Array(view(s, elmt_fun.used_variable))
+        s_elem = Array(view(s, elmt_fun.used_variable))
         @inbounds y_elem = y.arr[i].g_i
         @inbounds B_elem = B.arr[i].elmt_hess
         @inbounds B_elem_1 = B_1.arr[i].elmt_hess

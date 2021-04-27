@@ -82,7 +82,7 @@ function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where 
     # return algo_struct :: struct_algo{T, type}
 
     algo_struct = struct_algo(sps, B, g, grad, y, x, f, index, Δ, η, η₁, ϵ, n_eval_obj, n_eval_grad)
-    return algo_struct
+    return algo_struct 
 end
 
 
@@ -95,7 +95,7 @@ of the algorithm.
 When the initialisation is done we can start the algorithme.
 """
 function init_struct_algo!( s_a :: struct_algo{T,Y},
-                            x_k :: AbstractVector{Y}) where T where Y <: Number
+														x_k :: AbstractVector{Y}) where T where Y <: Number
 
     s_a.index = fst
     s_a.tpl_x[Int(s_a.index)] = x_k
@@ -313,7 +313,7 @@ function _solver_TR_PSR1_2!(m :: Z, obj_Expr :: T, n :: Int, type:: DataType, x_
 end
 
 
-function _solver_TR_PSR1!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.meta.x0), kwargs...) where T <: AbstractNLPModel where Y <: Number
+function _solver_TR_PSR1!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.meta.x0), kwargs...) where T <: AbstractNLPModel 
     model = model_JUMP.eval.m
     evaluator = JuMP.NLPEvaluator(model)
     MathOptInterface.initialize(evaluator, [:ExprGraph])
@@ -322,6 +322,17 @@ function _solver_TR_PSR1!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.
     T2 = eltype(x)
     _solver_TR_PSR1_2!(model_JUMP, obj_Expr, n, T2, x; kwargs...)
 end
+
+
+function _solver_TR_PSR1!( adnlp :: RADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...)
+	n = length(x0)
+	ModelingToolkit.@variables x[1:n]
+	fun = adnlp.f(x)
+	ex = CalculusTreeTools.transform_to_expr_tree(fun)
+	T2 = eltype(x0)
+	_solver_TR_PSR1_2!(adnlp, ex, n, T2, x0; kwargs...)
+end
+
 
 
 #=
@@ -438,6 +449,7 @@ solver_TR_PBFGS!(m :: T;  kwargs... ) where T <: AbstractNLPModel = _solver_TR_P
 solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType ; kwargs...) where T where Y <: Number = _solver_TR_PBFGS!(obj_Expr, n, x_init, type; kwargs...)
 function _solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y}, type=Float64 :: DataType; kwargs... ) where T where Y <: Number
     s_a = alloc_struct_algo(obj_Expr, n :: Int, type :: DataType )
+		@show typeof(s_a)
     init_struct_algo!(s_a, x_init)
     pointer_cpt = Array{Int}([0])
     start_time = time()
@@ -491,6 +503,17 @@ function _solver_TR_PBFGS!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP
     n = model.moi_backend.model_cache.model.num_variables_created
     T2 = eltype(x)
     _solver_TR_PBFGS_2!(model_JUMP, obj_Expr, n, T2, x; kwargs...)
+end
+
+
+function _solver_TR_PBFGS!( adnlp :: RADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...) 
+	n = length(x0)
+	ModelingToolkit.@variables x[1:n]
+	fun = adnlp.f(x)
+	ex = CalculusTreeTools.transform_to_expr_tree(fun)
+	CalculusTreeTools.print_tree(ex)
+	T2 = eltype(x0)
+	_solver_TR_PBFGS_2!(adnlp, ex, n, T2, x0; kwargs...)
 end
 
 
@@ -654,4 +677,14 @@ function _solver_TR_PBS!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.m
     n = model.moi_backend.model_cache.model.num_variables_created
     T2 = eltype(x)
     _solver_TR_PBS_2!(model_JUMP, obj_Expr, n, T2, x; kwargs...)
+end
+
+
+function _solver_TR_PBS!( adnlp :: RADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...)
+	n = length(x0)
+	ModelingToolkit.@variables x[1:n]
+	fun = adnlp.f(x)
+	ex = CalculusTreeTools.transform_to_expr_tree(fun)
+	T2 = eltype(x0)
+	_solver_TR_PBS_2!(adnlp, ex, n, T2, x0; kwargs...)
 end

@@ -2,10 +2,12 @@ module PartiallySeparableSolvers
     using Revise
     using LinearOperators, Krylov, LinearAlgebra
 
-    using NLPModels
+    using NLPModels, ADNLPModels
 
-    using SolverTools
+    using SolverTools, SolverCore
     using NLPModelsJuMP, JuMP, MathOptInterface
+
+		using ModelingToolkit
 
     using Printf
     #=----------------------------------------------------------------------------------------------------------=#
@@ -25,9 +27,13 @@ module PartiallySeparableSolvers
     include("impl_Tr_Cg_Ab.jl") # Définie les solvers LSR1 et LBFGS
 
 
-    PBFGS(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PBFGS!(m; kwargs... )
-    PSR1(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PSR1!(m; kwargs... )
-    PBS(m :: T; kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBS!(m; kwargs... )
+    s_a_PBFGS(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PBFGS!(m; kwargs...)
+    s_a_PSR1(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PSR1!(m; kwargs...)
+    s_a_PBS(m :: T; kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBS!(m; kwargs...)
+
+		PBFGS(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PBFGS!(m; kwargs...)[2]
+    PSR1(m :: T;  kwargs... ) where T <: AbstractNLPModel = solver_TR_PSR1!(m; kwargs...)[2]
+    PBS(m :: T; kwargs... ) where T <: AbstractNLPModel = _solver_TR_PBS!(m; kwargs...)[2]
     PTRUNK( nlp :: T; kwargs...) where T <: AbstractNLPModel = my_Part_Trunk(nlp; kwargs...)
 
 
