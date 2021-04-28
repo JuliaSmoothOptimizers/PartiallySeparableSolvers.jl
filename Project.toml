@@ -4,7 +4,7 @@ authors = ["raynaudp "]
 version = "0.1.0"
 
 [deps]
-ADNLPModels = "27abe5f8-f956-475b-b898-3ff18f84eb2f"
+ADNLPModels = "54578032-b7ea-4c30-94aa-7cbd1cce6c9a"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CalculusTreeTools = "995bfbc1-c62b-4971-a5e3-ef0aad32e8da"
 CommonSubexpressions = "bbf7d656-a473-5ed7-a52c-81e309532950"

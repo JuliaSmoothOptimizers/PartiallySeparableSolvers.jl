@@ -1,7 +1,7 @@
 using JuMP, MathOptInterface, NLPModelsJuMP, LinearAlgebra, NLPModels, Test
 using CalculusTreeTools, PartiallySeparableNLPModel, PartiallySeparableSolvers
 
-# include("test\\dvpt_folder\\test_matrix_convexity.jl")
+# include("test\\test_matrix_convexity.jl")
 
 # création de la solution
 function create_solution(a,b,nb_inter)
@@ -15,8 +15,8 @@ end
 function create_initial_point_convex(a,b,nb_inter)
     n_total,h,xf = create_solution(a,b,nb_inter)
     legere_modif = x -> x^2
-    x = legere_modif.(xf)
-    return n_total,h,x
+    x0 = legere_modif.(xf)
+    return n_total,h,x0,xf
 end 
 
 # création du modèle 
@@ -26,7 +26,7 @@ function create_convex_JuMP_Model(;
                                  b=1,
                                  _string="undefined")
     m = Model()    
-    (n_total,h,x0) = create_initial_point_convex(a,b,nb_inter)# création du point initial en fonction du nombre d'intervalle
+    (n_total,h,x0,xf) = create_initial_point_convex(a,b,nb_inter)# création du point initial en fonction du nombre d'intervalle
     n = length(x0)
     # @show n n_total x0
     create_initial_point_convex(a,b,nb_inter)
@@ -50,14 +50,14 @@ end
 
 # Définition du modèle
 nombre_intervals = 10
-n,h,xf = create_initial_point_convex(0,1,nombre_intervals)
+n,h,x0,xf = create_initial_point_convex(0,1,nombre_intervals)
 (m,JuMP_nlp, SPS_nlp) = create_convex_JuMP_Model(;nb_inter=nombre_intervals)
 
 
 # Lancement des solvers
-sps_pbfgs, ges_pbfgs = PartiallySeparableSolvers.PBFGS(JuMP_nlp)
-sps_psr1, ges_psr1 = PartiallySeparableSolvers.PSR1(JuMP_nlp)
-sps_pbs, ges_pbs = PartiallySeparableSolvers.PBS(JuMP_nlp)
+sps_pbfgs, ges_pbfgs = PartiallySeparableSolvers.s_a_PBFGS(JuMP_nlp)
+sps_psr1, ges_psr1 = PartiallySeparableSolvers.s_a_PSR1(JuMP_nlp)
+sps_pbs, ges_pbs = PartiallySeparableSolvers.s_a_PBS(JuMP_nlp)
 
 # Récupération des solutions
 x_pbfgs = ges_pbfgs.solution
@@ -112,9 +112,9 @@ n = 1000
 
 
 # Lancement des solvers
-sps_pbfgs, ges_pbfgs = PartiallySeparableSolvers.PBFGS(JuMP_nlp)
-sps_psr1, ges_psr1 = PartiallySeparableSolvers.PSR1(JuMP_nlp)
-sps_pbs, ges_pbs = PartiallySeparableSolvers.PBS(JuMP_nlp)
+sps_pbfgs, ges_pbfgs = PartiallySeparableSolvers.s_a_PBFGS(JuMP_nlp)
+sps_psr1, ges_psr1 = PartiallySeparableSolvers.s_a_PSR1(JuMP_nlp)
+sps_pbs, ges_pbs = PartiallySeparableSolvers.s_a_PBS(JuMP_nlp)
 
 # Récupération des solutions
 x_pbfgs = ges_pbfgs.solution

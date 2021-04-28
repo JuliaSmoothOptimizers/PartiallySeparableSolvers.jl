@@ -324,7 +324,7 @@ function _solver_TR_PSR1!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.
 end
 
 
-function _solver_TR_PSR1!( adnlp :: RADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...)
+function _solver_TR_PSR1!( adnlp :: ADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...)
 	n = length(x0)
 	ModelingToolkit.@variables x[1:n]
 	fun = adnlp.f(x)
@@ -506,7 +506,7 @@ function _solver_TR_PBFGS!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP
 end
 
 
-function _solver_TR_PBFGS!( adnlp :: RADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...) 
+function _solver_TR_PBFGS!( adnlp :: ADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...) 
 	n = length(x0)
 	ModelingToolkit.@variables x[1:n]
 	fun = adnlp.f(x)
@@ -680,7 +680,7 @@ function _solver_TR_PBS!( model_JUMP :: T; x :: AbstractVector=copy(model_JUMP.m
 end
 
 
-function _solver_TR_PBS!( adnlp :: RADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...)
+function _solver_TR_PBS!( adnlp :: ADNLPModel; x0 :: AbstractVector=copy(adnlp.meta.x0), kwargs...)
 	n = length(x0)
 	ModelingToolkit.@variables x[1:n]
 	fun = adnlp.f(x)
