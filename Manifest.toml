@@ -73,12 +73,6 @@ git-tree-sha1 = "c3598e525718abcc440f69cc6d5f60dda0a1b61e"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.6+5"
 
-[[CSV]]
-deps = ["Dates", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode"]
-git-tree-sha1 = "6d4242ef4cb1539e7ede8e01a47a32365e0a34cd"
-uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.8.4"
-
 [[Cairo]]
 deps = ["Cairo_jll", "Colors", "Glib_jll", "Graphics", "Libdl", "Pango_jll"]
 git-tree-sha1 = "d0b3f8b4ad16cb0a2988c6788646a5e6a17b6b1b"
@@ -98,8 +92,8 @@ uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.5.1"
 
 [[CalculusTreeTools]]
-deps = ["ADNLPModels", "Documenter", "ForwardDiff", "JuMP", "LinearAlgebra", "MathOptInterface", "ModelingToolkit", "ReverseDiff", "Revise", "SparseArrays", "SymbolicUtils", "Test"]
-git-tree-sha1 = "d9a91006c7c80e7f9246506cfe2c9774185c50bf"
+deps = ["ADNLPModels", "Documenter", "ForwardDiff", "JuMP", "LinearAlgebra", "MathOptInterface", "ModelingToolkit", "ReverseDiff", "Revise", "SparseArrays", "Test"]
+git-tree-sha1 = "436f1756da98b3895fe4cd0f59a60829cfad2de0"
 repo-rev = "master"
 repo-url = "https://github.com/paraynaud/CalculusTreeTools.jl.git"
 uuid = "995bfbc1-c62b-4971-a5e3-ef0aad32e8da"
@@ -928,7 +922,7 @@ version = "1.1.0"
 
 [[PartiallySeparableNLPModel]]
 deps = ["BenchmarkTools", "CalculusTreeTools", "ForwardDiff", "JuMP", "LinearAlgebra", "MathOptInterface", "OptimizationProblems", "ProfileView", "ReverseDiff", "Revise", "SparseArrays", "SyntaxTree", "Test"]
-git-tree-sha1 = "4e37b8d21bb885aa58c17f529f4b09bd26c69c6a"
+git-tree-sha1 = "22a49046142cf8dca1daed9f45d9c1d07e0144c5"
 repo-rev = "master"
 repo-url = "https://github.com/paraynaud/PartiallySeparableNLPModel.jl.git"
 uuid = "7f79d04d-aed5-44bf-a878-92b5ccf934e0"
@@ -1128,12 +1122,6 @@ deps = ["Dates"]
 git-tree-sha1 = "ad4b278adb62d185bbcb6864dc24959ab0627bf6"
 uuid = "6c6a2e73-6563-6170-7368-637461726353"
 version = "1.0.3"
-
-[[SentinelArrays]]
-deps = ["Dates", "Random"]
-git-tree-sha1 = "6ccde405cf0759eba835eb613130723cb8f10ff9"
-uuid = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
-version = "1.2.16"
 
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
