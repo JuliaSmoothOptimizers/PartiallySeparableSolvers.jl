@@ -43,7 +43,7 @@ function cragglevy(x)
 end
 
 
-create_cragg_levy_ADNLPModel(n :: Int) = RADNLPModel(eval(cragglevy), create_initial_point_chained_cragg_levy(n), name=name_model_cragg_levy(n))
+create_cragg_levy_ADNLPModel(n :: Int) = ADNLPModel(eval(cragglevy), create_initial_point_chained_cragg_levy(n), name=name_model_cragg_levy(n))
 function create_cragg_levy_JuMPModel(n :: Int)
   (m_cragg, evaluator,obj) = create_chained_cragg_levy_JuMP_Model(n)
   return MathOptNLPModel(m_cragg, name=name_model_cragg_levy(n))

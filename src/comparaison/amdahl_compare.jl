@@ -22,53 +22,18 @@ function my_criteria_timeless(d :: DataFrames.DataFrame)
     d.obj_5grad_5Hv = my_criteria
 end
 
-"""
-    second_criteria(n, time, obj, neval_grad, neval_Hv)
-Returns a kind of score =time / ( n_obj + 5*neval_grad + 5*neval_Hv). This criteria evluate the efficiency of the base function used in a solver
-"""
-second_criteria(n, time, n_obj, n_grad, n_hess) = time / (n_obj + 5*n_grad + 5*n_hess)
-function my_criteria_time(d :: DataFrames.DataFrame)
-    nvar = d.nvar
-    iter = d.iter
-    n_eval_obj = d.neval_obj
-    n_eval_grad = d.neval_grad
-    n_eval_hprod = d.neval_hprod
-    elapsed_time = d.elapsed_time
-    my_criteria = []
-    for i in 1:length(nvar)
-      push!(my_criteria, second_criteria(nvar[i], elapsed_time[i], n_eval_obj[i], n_eval_grad[i], n_eval_hprod[i]))
-    end
-    d.time_sur_obj_5grad_5Hv = my_criteria
-end
-
-
-"""
-    second_criteria(n_obj, neval_grad)
-Returns the percentage of step keep by our solver
-"""
-third_criteria(n_obj, n_grad) = 1/((n_grad/n_obj)*100)
-function acceptance_criteria(d :: DataFrames.DataFrame)
-  n_eval_obj = d.neval_obj
-  n_eval_grad = d.neval_grad
-  my_criteria = []
-  for i in 1:length(n_eval_obj)
-    push!(my_criteria, third_criteria(n_eval_obj[i], n_eval_grad[i]))
-  end
-  d.inverse_pourcentage_pas_accepte = my_criteria
-end
-
 
 
 
 println(" \n\n génération des problemes")
-# n_array = [100,500,1000,2000,5000,10000,25000,50000,100000]
-# n_array = [1000,2000,5000, 10000]
-# problems = create_all_problems(n_array)
-# problems2 = create_all_problems2(n_array)
 current_path = pwd()
 include(current_path * "/benchmark/scripts/generate_problems.jl")
-problems = create_JuMP_models()
-problems2 = create_ADNLP_models()
+
+
+n_array = [100,200,400,800,1600,3200,6400,12800]
+mapreduce((n -> create_JuMP_models(n)), vcat, n_array) # generate the problem for the sizes of n_array
+# problems = create_JuMP_models()
+# problems2 = create_ADNLP_models()
 
 
 println("\n\ndéfinition des solver\n\n")
@@ -77,24 +42,24 @@ println("\n\ndéfinition des solver\n\n")
 
 const atol = 1.0e-5
 const rtol = 1.0e-6
-const max_time = 600.0
-const max_eval = 1500
+const max_time = 300.0
+const max_eval = 100000
 
 
-solver2 = Dict{Symbol,Function}(
-  :trunk_Hv_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(prob; kwargs...),
-  :trunk_lsr1_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob);kwargs...),
-  :trunk_lbfgs_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob);kwargs...)
-)
+# solver2 = Dict{Symbol,Function}(
+  # :trunk_Hv_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(prob; kwargs...),
+  # :trunk_lsr1_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob);kwargs...),
+  # :trunk_lbfgs_adnlpmodel => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob);kwargs...)
+# )
 
 
 solver = Dict{Symbol,Function}(
-:trunk_Hv_JuMP => ((prob;kwargs...) -> JSOSolvers.trunk(prob;kwargs...)),
-:trunk_lsr1_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
-:trunk_lbfgs_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob); kwargs...),
-:trunk_Hv_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
-# :my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
-# :my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
+# :trunk_Hv_JuMP => ((prob;kwargs...) -> JSOSolvers.trunk(prob;kwargs...)),
+# :trunk_lsr1_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
+# :trunk_lbfgs_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob); kwargs...),
+# :trunk_Hv_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
+:my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
+:my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
 :bfgs_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
 :sr1_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
 :bs_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
@@ -105,27 +70,10 @@ solver = Dict{Symbol,Function}(
 
 
 keys_hess = [:trunk_Hv_JuMP, :trunk_Hv_adnlpmodel, :trunk_Hv_SPS]
-keys_bfgs = [:trunk_lbfgs_JuMP, :trunk_lbfgs_adnlpmodel, :bfgs_SPS]
-keys_sr1 =  [:trunk_lsr1_JuMP, :trunk_lsr1_adnlpmodel, :sr1_SPS, :bs_SPS ]
-
-
-#test
-# for problem in problems
-#   @show problem.meta.name
-#   time = @timed PartiallySeparableSolvers.PartionnedNLPModel(problem)
-#   @show time.time
-#   JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(problem); max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-#   PartiallySeparableSolvers.PBFGS(problem; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-#   PartiallySeparableSolvers.PSR1(problem; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-#   PartiallySeparableSolvers.PBS(problem; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-# end
-
-# @code_warntype JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(problems[2]); max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-# ProfileView.@profview JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(problems[3]); max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
-
-
-
-# error("fin")
+# keys_bfgs = [:trunk_lbfgs_JuMP, :bfgs_SPS, :bs_SPS]
+keys_bfgs = [:my_lbfgs, :bfgs_SPS, :bs_SPS]
+# keys_sr1 =  [:trunk_lsr1_JuMP, :sr1_SPS, :bs_SPS ]
+keys_sr1 =  [:my_lsr1, :sr1_SPS, :bs_SPS ]
 
 
 #= Lancement du benchmark sur les problèmes générés, sur les solvers défini dans la variable solvers =#
@@ -134,17 +82,17 @@ println("lancement des benchmmarks NLPModelJuMP")
 #lancement de bmark_solver sur les NLPModelJUMP
 stats = bmark_solvers(solver, problems; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 
-println("lancement des benchmmarks ADNLPModel")
-#lancement de bmark_solver sur les ADNLPModels
-stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
+# println("lancement des benchmmarks ADNLPModel")
+# #lancement de bmark_solver sur les ADNLPModels
+# stats2 = bmark_solvers(solver2, problems2; max_time=max_time, max_eval = max_eval, atol=atol, rtol=rtol)
 
-#récupération des clés
-keys_stats2 = keys(stats2)
+# #récupération des clés
+# keys_stats2 = keys(stats2)
 
-#on ajoute les Dataframes de stats2 à stats
-for i in keys_stats2
-  stats[i] = stats2[i]
-end
+# #on ajoute les Dataframes de stats2 à stats
+# for i in keys_stats2
+#   stats[i] = stats2[i]
+# end
 
 
 
@@ -156,15 +104,9 @@ println("affichage du profile des solvers par rapport au problèmes")
 keys_stats = keys(stats)
 for i in keys_stats
   my_criteria_timeless(stats[i])
-  my_criteria_time(stats[i])
-  acceptance_criteria(stats[i])
 end
 
 #Construction de tables particulières pour chaque classe de solvers.
-stats_hess = Dict{Symbol,DataFrame}([])
-for i in keys_hess
-  stats_hess[i] = stats[i]
-end
 
 stats_bfgs = Dict{Symbol,DataFrame}([])
 for i in keys_bfgs
@@ -178,7 +120,7 @@ end
 
 println("affichage des tables")
 #selection des champs à affichier
-selected_fields = [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :obj_5grad_5Hv, :time_sur_obj_5grad_5Hv, :inverse_pourcentage_pas_accepte]
+selected_fields = [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod, :obj_5grad_5Hv]
 for i in keys_stats
   println(stdout, "\n\n\n" * string(i) )
   pretty_stats(stdout, stats[i][!, [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod]], tf=markdown)
@@ -193,7 +135,6 @@ io = open(location_md,"w+")
 
 for i in keys_stats
   println(io, "\n\n\n" * string(i) )
-  # markdown_table(io, stats[i], cols=selected_fields)
   pretty_stats(io, stats[i][!, [:name, :nvar, :elapsed_time, :iter, :dual_feas, :status, :objective, :neval_obj, :neval_grad, :neval_hprod]], tf=markdown)
 end
 close(io)
@@ -219,62 +160,35 @@ println("ecriture des profiles")
 ENV["GKSwstype"]=100
 
 println("écriture de tous les profiles")
+repo_global = "src/comparaison/results/amdahl/profile/"
 p_iter = SolverBenchmark.performance_profile(stats, df -> df.iter)
-savefig(p_iter, "src/comparaison/results/profiles/iter_
-profile.pdf")
+savefig(p_iter, repo_global*"iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats, df -> df.elapsed_time)
-savefig(p_time, "src/comparaison/results/profiles/time_profile.pdf")
+savefig(p_time, repo_global*"time_profile.pdf")
 p_fst_crit = SolverBenchmark.performance_profile(stats, df -> df.obj_5grad_5Hv)
-savefig(p_fst_crit, "src/comparaison/results/profiles/obj_5grad_5Hv.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats, df -> df.time_sur_obj_5grad_5Hv)
-savefig(p_snd_crit, "src/comparaison/results/profiles/time_sur_obj_5grad_5Hv.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats, df -> df.inverse_pourcentage_pas_accepte)
-savefig(p_thd_crit, "src/comparaison/results/profiles/inverse_pourcentage_pas_accepte.pdf")
+savefig(p_fst_crit, repo_global*"obj_5grad_5Hv.pdf")
 
-println("écriture des profiles hess like")
-
-repo_hess = "src/comparaison/results/profiles/hess_like/"
-p_iter = SolverBenchmark.performance_profile(stats_hess, df -> df.iter)
-savefig(p_iter, repo_hess * "iter_profile.pdf")
-p_time = SolverBenchmark.performance_profile(stats_hess, df -> df.elapsed_time)
-savefig(p_time, repo_hess * "time_profile.pdf")
-p_fst_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.obj_5grad_5Hv)
-savefig(p_fst_crit, repo_hess * "obj_5grad_5Hv.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.time_sur_obj_5grad_5Hv)
-savefig(p_snd_crit, repo_hess * "time_sur_obj_5grad_5Hv.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats_hess, df -> df.inverse_pourcentage_pas_accepte)
-savefig(p_thd_crit, repo_hess * "inverse_pourcentage_pas_accepte.pdf")
 
 
 println("écriture des profiles BFGS like")
 
-repo_bfgs = "src/comparaison/results/profiles/bfgs_like/"
+repo_bfgs = "src/comparaison/results/amdahl/bfgs_like/"
 p_iter = SolverBenchmark.performance_profile(stats_bfgs, df -> df.iter)
 savefig(p_iter, repo_bfgs * "iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats_bfgs, df -> df.elapsed_time)
 savefig(p_time, repo_bfgs * "time_profile.pdf")
 p_fst_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.obj_5grad_5Hv)
 savefig(p_fst_crit, repo_bfgs * "obj_5grad_5Hv.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.time_sur_obj_5grad_5Hv)
-savefig(p_snd_crit, repo_bfgs * "time_sur_obj_5grad_5Hv.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats_bfgs, df -> df.inverse_pourcentage_pas_accepte)
-savefig(p_thd_crit, repo_bfgs * "inverse_pourcentage_pas_accepte.pdf")
-
 
 println("écriture des profiles SR1 like")
 
-repo_sr1 = "src/comparaison/results/profiles/sr1_like/"
+repo_sr1 = "src/comparaison/results/amdahl/sr1_like/"
 p_iter = SolverBenchmark.performance_profile(stats_sr1, df -> df.iter)
 savefig(p_iter, repo_sr1 * "iter_profile.pdf")
 p_time = SolverBenchmark.performance_profile(stats_sr1, df -> df.elapsed_time)
 savefig(p_time, repo_sr1 * "time_profile.pdf")
 p_fst_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.obj_5grad_5Hv)
 savefig(p_fst_crit, repo_sr1 * "obj_5grad_5Hv.pdf")
-p_snd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.time_sur_obj_5grad_5Hv)
-savefig(p_snd_crit, repo_sr1 * "time_sur_obj_5grad_5Hv.pdf")
-p_thd_crit = SolverBenchmark.performance_profile(stats_sr1, df -> df.inverse_pourcentage_pas_accepte)
-savefig(p_thd_crit, repo_sr1 * "inverse_pourcentage_pas_accepte.pdf")
-
 
 println("Fin des écritures")
 

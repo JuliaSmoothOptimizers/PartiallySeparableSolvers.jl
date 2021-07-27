@@ -48,7 +48,7 @@ function chainwoo(x)
 end
 
 
-create_chained_wood_ADNLPModel(n :: Int) = RADNLPModel(eval(chainwoo), create_initial_point_chained_wood(n), name=name_model_chained_wood(n))
+create_chained_wood_ADNLPModel(n :: Int) = ADNLPModel(eval(chainwoo), create_initial_point_chained_wood(n), name=name_model_chained_wood(n))
 function create_chained_wood_JuMPModel(n :: Int)
   (m_chained, evaluator,obj) = create_chained_wood_JuMP_Model(n)
   return MathOptNLPModel(m_chained, name=name_model_chained_wood(n))

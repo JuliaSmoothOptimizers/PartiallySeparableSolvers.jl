@@ -28,6 +28,7 @@ src/comparaison/archive/**
 src/comparaison/results/profiles/**
 src/comparaison/results/**
 src/comparaison/file_dataframe/**
+src/comparaison/amdahl/**
 
 benchmark/profiles/profiles.7z
 benchmark/profiles/**

@@ -40,7 +40,7 @@ end
 
 
 
-create_rosenbrock_ADNLPModel(n :: Int) = RADNLPModel(eval(rosenbrock), create_initial_point_Rosenbrock(n), name=name_model_rosenbrock(n))
+create_rosenbrock_ADNLPModel(n :: Int) = ADNLPModel(eval(rosenbrock), create_initial_point_Rosenbrock(n), name=name_model_rosenbrock(n))
 function create_rosenbrock_JuMPModel(n :: Int)
     (m_ros, evaluator, obj) = create_Rosenbrock_JuMP_Model(n)
     return MathOptNLPModel(m_ros, name=name_model_rosenbrock(n))

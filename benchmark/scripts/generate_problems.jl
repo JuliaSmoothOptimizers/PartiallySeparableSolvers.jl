@@ -23,7 +23,7 @@ include("define_ADNLPModel.jl")
 using OptimizationProblems, JuMP, ADNLPModels
 
 function create_problems(n :: Int)
-  problem_collection = Vector{Tuple{JuMP.Model,ADNLPModels.RADNLPModel}}(undef,0)
+  problem_collection = Vector{Tuple{JuMP.Model,ADNLPModels.ADNLPModel}}(undef,0)
 
   push!(problem_collection, (OptimizationProblems.arwhead(n), arwhead_ADNLPModel(n)) )
   push!(problem_collection, (OptimizationProblems.bdqrtic(n), bdqrtic_ADNLPModel(n)) )
@@ -146,7 +146,8 @@ function create_problems(n :: Int)
   return problem_collection
 end
 
-n = 10000
+n = 10
+n_JuMP_ADNLP_Model = 10
 @inline create_problems() = create_problems(n)
 
 
@@ -156,12 +157,9 @@ for i in 1:n
 end
 # problems = create_problems()
 
-
-
-n_JuMP_ADNLP_Model = 1000
-
+@inline create_ADNLP_models() = create_ADNLP_models(n_JuMP_ADNLP_Model)
 function create_ADNLP_models(n :: Int)
-  problem_collection = Vector{ADNLPModels.RADNLPModel}(undef,0)
+  problem_collection = Vector{ADNLPModels.ADNLPModel}(undef,0)
 
   push!(problem_collection, arwhead_ADNLPModel(n))
   push!(problem_collection, bdqrtic_ADNLPModel(n))
@@ -208,10 +206,9 @@ function create_ADNLP_models(n :: Int)
   return problem_collection
 end
 
-@inline create_ADNLP_models() = create_ADNLP_models(n_JuMP_ADNLP_Model)
 
 
-
+@inline create_JuMP_models() = create_JuMP_models(n_JuMP_ADNLP_Model)
 function create_JuMP_models(n :: Int)
   problem_collection = Vector{NLPModelsJuMP.MathOptNLPModel}(undef,0)
 
@@ -261,7 +258,6 @@ function create_JuMP_models(n :: Int)
 end
 
 
-@inline create_JuMP_models() = create_JuMP_models(n_JuMP_ADNLP_Model)
 
 
 # create_JuMP_models()

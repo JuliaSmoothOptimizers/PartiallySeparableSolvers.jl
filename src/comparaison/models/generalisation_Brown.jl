@@ -40,7 +40,7 @@ end
 
 
 
-create_generalisation_brown_ADNLPModel(n :: Int) = RADNLPModel(eval(generalisation_brown), create_initial_point_brown(n), name=name_model_brown(n))
+create_generalisation_brown_ADNLPModel(n :: Int) = ADNLPModel(eval(generalisation_brown), create_initial_point_brown(n), name=name_model_brown(n))
 function create_generalisation_brown_JuMPModel(n :: Int)
     (m_brown, evaluator, obj) = create_generalisation_Brown(n)
     return MathOptNLPModel(m_brown, name=name_model_brown(n))

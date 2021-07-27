@@ -42,7 +42,7 @@ function chainpow(x)
 end
 
 
-create_chained_powel_ADNLPModel(n :: Int) = RADNLPModel(eval(chainpow), create_initial_point_chained_Powel(n), name=name_model_chained_powel(n))
+create_chained_powel_ADNLPModel(n :: Int) = ADNLPModel(eval(chainpow), create_initial_point_chained_Powel(n), name=name_model_chained_powel(n))
 function create_chained_powel_JuMPModel(n :: Int)
   (m_chained, evaluator,obj) = create_chained_Powel_JuMP_Model(n)
   return MathOptNLPModel(m_chained, name=name_model_chained_powel(n))
