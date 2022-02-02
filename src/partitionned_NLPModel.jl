@@ -34,21 +34,21 @@ using FastClosures
 			return PartionnedNLPModel(obj_Expr, n, x0)
 	end
 
-    function PartionnedNLPModel(model :: JuMP.Model)
-        evaluator = JuMP.NLPEvaluator(model)
-        MathOptInterface.initialize(evaluator, [:ExprGraph])
-        obj_Expr = MathOptInterface.objective_expr(evaluator) :: Expr
-        n = model.moi_backend.model_cache.model.num_variables_created
-        x0 = model.meta.x0
-        return PartionnedNLPModel(obj_Expr, n, x0)
-    end
+	function PartionnedNLPModel(model :: JuMP.Model)
+			evaluator = JuMP.NLPEvaluator(model)
+			MathOptInterface.initialize(evaluator, [:ExprGraph])
+			obj_Expr = MathOptInterface.objective_expr(evaluator) :: Expr
+			n = model.moi_backend.model_cache.model.num_variables_created
+			x0 = model.meta.x0
+			return PartionnedNLPModel(obj_Expr, n, x0)
+	end
 
-    function PartionnedNLPModel(obj :: T, n :: Int, x0 :: AbstractVector{Y}, t=Y :: DataType) where T where Y <: Number
-        meta = NLPModelMeta(n,x0=x0)
-        s_a = alloc_struct_algo(obj, n :: Int, t :: DataType )
+	function PartionnedNLPModel(obj :: T, n :: Int, x0 :: AbstractVector{Y}, t=Y :: DataType) where T where Y <: Number
+			meta = NLPModelMeta(n,x0=x0)
+			s_a = alloc_struct_algo(obj, n :: Int, t :: DataType )
 
-        return PartionnedNLPModel{CalculusTreeTools.complete_expr_tree,t}(meta, s_a, Counters())
-    end
+			return PartionnedNLPModel{CalculusTreeTools.complete_expr_tree,t}(meta, s_a, Counters())
+	end
 
 
     function NLPModels.obj(nlp :: PartionnedNLPModel{T,Y}, x :: AbstractVector{Y}) where T where Y <: Number
