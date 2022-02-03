@@ -23,6 +23,7 @@ function create_initial_point_chained_wood(n)
 			point_initial[i] = -2
 		elseif i > 4 && mod(i,2) == 0
 			point_initial[i] = 0
+		end
 	end
 	return point_initial
 end
