@@ -113,8 +113,7 @@ x_pbs = ges_pbs.solution
 # @test ges_pbs.solution ≈ xf atol=1e-6
 # @test ges_psr1.solution ≈ xf atol=1e-6
 
-
-# Récupération des métrices
+# Building the matrices
 H_pbfgs = zeros(n,n)
 H_pbsr1 = zeros(n,n)
 H_pbs = zeros(n,n)
