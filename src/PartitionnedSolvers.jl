@@ -227,7 +227,9 @@ function iterations_TR_PSR1!(s_a :: struct_algo{T,Y},
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
-    opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModel.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
+
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
 
     while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elapsed_time < max_time
@@ -412,7 +414,8 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y},
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
-    opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModel.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
     @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
     while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elasped_time < max_time
@@ -592,7 +595,9 @@ function iterations_TR_PBS!(s_a :: struct_algo{T,Y},
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
-    opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModel.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
+
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
     while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elapsed_time < max_time

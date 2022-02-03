@@ -283,7 +283,8 @@ function solver_TR_CG_Ab_NLP_Trunk(nlp :: PartionnedNLPModel{T,Y};
 
 
     n = nlp.s_a.sps.n_var
-    B(nlp :: PartionnedNLPModel{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, v -> NLPModels.hprod(nlp,v) ) :: LinearOperator{Y}
+    # B(nlp :: PartionnedNLPModel{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, v -> NLPModels.hprod(nlp,v) ) :: LinearOperator{Y}
+		B(nlp :: PartionnedNLPModel{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> NLPModels.hprod!(nlp, v, res)) )
 
 
     T2 = eltype(x)

@@ -1,5 +1,4 @@
 module PartiallySeparableSolvers
-    using Revise
     using LinearOperators, Krylov, LinearAlgebra
 
     using NLPModels, ADNLPModels
