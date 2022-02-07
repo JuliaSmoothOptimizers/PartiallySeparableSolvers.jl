@@ -47,7 +47,7 @@ jobs:
             ${{ runner.os }}-test-
             ${{ runner.os }}-
       - name: Installing non-registered dependencies
-        run:
+        run: |
           using Pkg
           pkg1 = PackageSpec(url = "https://github.com/paraynaud/CalculusTreeTools.jl.git")
           pkg2 = PackageSpec(url = "https://github.com/paraynaud/PartiallySeparableNLPModels.jl.git")
