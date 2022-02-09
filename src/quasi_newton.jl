@@ -73,10 +73,10 @@ to the BFGS update method.
 update the Hessian approximation Bₖ using the SR1 method, according to the sps partially separable structre. To make
 the update, we need the grad_vector y and the vector s. B, B_1 and y use structure linked with the partially separable structure stored in sps.
 """
-    function update_SPS_SR1!(sps :: PartiallySeparableNLPModel.SPS{T},
-                             B :: PartiallySeparableNLPModel.Hess_matrix{Y},
-                             B_1 :: PartiallySeparableNLPModel.Hess_matrix{Y},
-                             y :: PartiallySeparableNLPModel.grad_vector{Y},
+    function update_SPS_SR1!(sps :: PartiallySeparableNLPModels.SPS{T},
+                             B :: PartiallySeparableNLPModels.Hess_matrix{Y},
+                             B_1 :: PartiallySeparableNLPModels.Hess_matrix{Y},
+                             y :: PartiallySeparableNLPModels.grad_vector{Y},
                              s :: AbstractVector{Y}) where T where Y <: Number
         l_elmt_fun = length(sps.structure)
          # @Threads.threads for i in 1:l_elmt_fun
@@ -95,10 +95,10 @@ the update, we need the grad_vector y and the vector s. B, B_1 and y use structu
 update the Hessian approximation Bₖ using the SR1 method, according to the sps partially separable structre. To make
 the update, we need the grad_vector y and the vector s. B, B_1 and y use structure linked with the partially separable structure stored in sps.
 """
-    function update_SPS_BFGS!(sps :: PartiallySeparableNLPModel.SPS{T},
-                              B :: PartiallySeparableNLPModel.Hess_matrix{Y},
-                              B_1 :: PartiallySeparableNLPModel.Hess_matrix{Y},
-                              y :: PartiallySeparableNLPModel.grad_vector{Y},
+    function update_SPS_BFGS!(sps :: PartiallySeparableNLPModels.SPS{T},
+                              B :: PartiallySeparableNLPModels.Hess_matrix{Y},
+                              B_1 :: PartiallySeparableNLPModels.Hess_matrix{Y},
+                              y :: PartiallySeparableNLPModels.grad_vector{Y},
                               s :: AbstractVector{Y}) where T where Y <: Number
         l_elmt_fun = length(sps.structure)
          # @Threads.threads for i in 1:l_elmt_fun
@@ -119,16 +119,16 @@ the update, we need the grad_vector y and the vector s. B, B_1 and y use structu
     We update the Hessian approximation Bₖ according with partially separable structure. We update each Bᵢₖ,if it is convex we use
     BFGS rather than SR1.
     """
-    function update_SPS_mix_SR1_BFGS!(sps :: PartiallySeparableNLPModel.SPS{T},
-                                      B :: PartiallySeparableNLPModel.Hess_matrix{Y},
-                                      B_1 :: PartiallySeparableNLPModel.Hess_matrix{Y},
-                                      y :: PartiallySeparableNLPModel.grad_vector{Y},
+    function update_SPS_mix_SR1_BFGS!(sps :: PartiallySeparableNLPModels.SPS{T},
+                                      B :: PartiallySeparableNLPModels.Hess_matrix{Y},
+                                      B_1 :: PartiallySeparableNLPModels.Hess_matrix{Y},
+                                      y :: PartiallySeparableNLPModels.grad_vector{Y},
                                       s :: AbstractVector{Y}) where T where Y <: Number
     l_elmt_fun = length(sps.structure)
      # @Threads.threads for i in 1:l_elmt_fun
     for i in 1:l_elmt_fun
         elmt_fun = sps.structure[i]
-        status = PartiallySeparableNLPModel.get_convexity_status(elmt_fun)
+        status = PartiallySeparableNLPModels.get_convexity_status(elmt_fun)
         s_elem = Array(view(s, elmt_fun.used_variable))
         @inbounds y_elem = y.arr[i].g_i
         @inbounds B_elem = B.arr[i].elmt_hess

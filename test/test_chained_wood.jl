@@ -33,16 +33,16 @@ n = 100
 obj_expr_tree = CalculusTreeTools.transform_to_expr_tree(obj)
 
 complete_expr_tree = CalculusTreeTools.create_complete_tree(obj_expr_tree)
-Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(complete_expr_tree, n)
+Struct_PS = PartiallySeparableNLPModels.deduct_partially_separable_structure(complete_expr_tree, n)
 
 JuMP_mod = MathOptNLPModel(m_ros, name="Chained Powel "*string(n))
 
 @testset " test convexity detection chainedwood" begin
 	for i in 1:length(Struct_PS.structure)
 		if (i%6 == 1) || (i%6 == 3)
-			@test CalculusTreeTools.is_unknown(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[i]))
+			@test CalculusTreeTools.is_unknown(PartiallySeparableNLPModels.get_convexity_status(Struct_PS.structure[i]))
 		else
-			@test CalculusTreeTools.is_convex(PartiallySeparableNLPModel.get_convexity_status(Struct_PS.structure[i]))
+			@test CalculusTreeTools.is_convex(PartiallySeparableNLPModels.get_convexity_status(Struct_PS.structure[i]))
 		end
 	end
 end

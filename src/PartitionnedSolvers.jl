@@ -4,14 +4,14 @@
 #Définition de la structure nécessaire pour mmon algo, c'est une deuxième version
 mutable struct struct_algo{T,Y <: Number}
     #structure partiellement séparable
-    sps :: PartiallySeparableNLPModel.SPS{T}
+    sps :: PartiallySeparableNLPModels.SPS{T}
     #tuple de B
-    tpl_B :: Vector{PartiallySeparableNLPModel.Hess_matrix{Y}}
+    tpl_B :: Vector{PartiallySeparableNLPModels.Hess_matrix{Y}}
 
     #tuple des gradients et la différence entre les gradients y
-    tpl_g :: Vector{PartiallySeparableNLPModel.grad_vector{Y}}
+    tpl_g :: Vector{PartiallySeparableNLPModels.grad_vector{Y}}
     grad :: AbstractVector{Y}
-    y :: PartiallySeparableNLPModel.grad_vector{Y}
+    y :: PartiallySeparableNLPModels.grad_vector{Y}
 
     # tuple de x
     tpl_x :: Vector{Vector{Y}}
@@ -38,24 +38,24 @@ the vectors to store the points xₖ and xₖ₋₁, some constants Δ, η... an
 function alloc_struct_algo(obj :: T, n :: Int, type=Float64 :: DataType ) where T
 
     # détéction de la structure partiellement séparable
-    sps = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj,n)
-    # sps = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj,n) :: PartiallySeparableNLPModel.SPS{T}
+    sps = PartiallySeparableNLPModels.deduct_partially_separable_structure(obj,n)
+    # sps = PartiallySeparableNLPModels.deduct_partially_separable_structure(obj,n) :: PartiallySeparableNLPModels.SPS{T}
 
     # @show sps
     # construction des structure de données nécessaire pour le gradient à l'itération k/k+1 et le différence des gradients
-    construct_element_grad = (y :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_gradient{type}(Vector{type}(zeros(type, length(y.used_variable)) )) )
-    g_k = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
-    g_k1 = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
-    g = Vector{PartiallySeparableNLPModel.grad_vector{type}}([g_k,g_k1])
-    y = PartiallySeparableNLPModel.grad_vector{type}( construct_element_grad.(sps.structure) )
+    construct_element_grad = (y :: PartiallySeparableNLPModels.element_function -> PartiallySeparableNLPModels.element_gradient{type}(Vector{type}(zeros(type, length(y.used_variable)) )) )
+    g_k = PartiallySeparableNLPModels.grad_vector{type}( construct_element_grad.(sps.structure) )
+    g_k1 = PartiallySeparableNLPModels.grad_vector{type}( construct_element_grad.(sps.structure) )
+    g = Vector{PartiallySeparableNLPModels.grad_vector{type}}([g_k,g_k1])
+    y = PartiallySeparableNLPModels.grad_vector{type}( construct_element_grad.(sps.structure) )
     #finally a real sized gradient
     grad = Vector{type}(undef, n)
 
     # constructions des structures de données nécessaires pour le Hessien ou son approximation
-    construct_element_hess = ( elm_fun :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_hessian{type}( Array{type,2}(undef, length(elm_fun.used_variable), length(elm_fun.used_variable) )) )
-    B_k = PartiallySeparableNLPModel.Hess_matrix{type}(construct_element_hess.(sps.structure))
-    B_k1 = PartiallySeparableNLPModel.Hess_matrix{type}(construct_element_hess.(sps.structure))
-    B = Vector{PartiallySeparableNLPModel.Hess_matrix{type}}([B_k, B_k1])
+    construct_element_hess = ( elm_fun :: PartiallySeparableNLPModels.element_function -> PartiallySeparableNLPModels.element_hessian{type}( Array{type,2}(undef, length(elm_fun.used_variable), length(elm_fun.used_variable) )) )
+    B_k = PartiallySeparableNLPModels.Hess_matrix{type}(construct_element_hess.(sps.structure))
+    B_k1 = PartiallySeparableNLPModels.Hess_matrix{type}(construct_element_hess.(sps.structure))
+    B = Vector{PartiallySeparableNLPModels.Hess_matrix{type}}([B_k, B_k1])
 
     #définition des 2 points xk et x_k1
     x_k = Vector{type}(undef, n)
@@ -100,14 +100,14 @@ function init_struct_algo!( s_a :: struct_algo{T,Y},
     s_a.index = fst
     s_a.tpl_x[Int(s_a.index)] = x_k
 
-    PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
-    PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
+    PartiallySeparableNLPModels.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
+    PartiallySeparableNLPModels.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
     s_a.n_eval_grad += 1
 
-    # PartiallySeparableNLPModel.struct_hessian!(s_a.sps, s_a.x_k, s_a.B_k)
-    PartiallySeparableNLPModel.id_hessian!(s_a.sps, s_a.tpl_B[Int(s_a.index)])
+    # PartiallySeparableNLPModels.struct_hessian!(s_a.sps, s_a.x_k, s_a.B_k)
+    PartiallySeparableNLPModels.id_hessian!(s_a.sps, s_a.tpl_B[Int(s_a.index)])
 
-    s_a.tpl_f[Int(s_a.index)] = PartiallySeparableNLPModel.evaluate_SPS(s_a.sps, s_a.tpl_x[Int(s_a.index)])
+    s_a.tpl_f[Int(s_a.index)] = PartiallySeparableNLPModels.evaluate_SPS(s_a.sps, s_a.tpl_x[Int(s_a.index)])
     s_a.n_eval_obj += 1
 
 end
@@ -133,7 +133,7 @@ end
 return the quadratic approximation m(pₖ) = fₖ + gₖᵀpₖ + 1/2.pₖᵀBpₖ. The values of  fₖ, gₖ and Bₖ are stored inside struct_algo.
 """
 function approx_quad(s_a :: struct_algo{T,Y}, x :: AbstractVector{Y}) where T where Y <: Number
-    s_a.tpl_f[Int(s_a.index)] + s_a.grad' * x  +  1/2 *  PartiallySeparableNLPModel.product_matrix_sps(s_a.sps, s_a.tpl_B[Int(s_a.index)], x)' * x
+    s_a.tpl_f[Int(s_a.index)] + s_a.grad' * x  +  1/2 *  PartiallySeparableNLPModels.product_matrix_sps(s_a.sps, s_a.tpl_B[Int(s_a.index)], x)' * x
 end
 
 """
@@ -142,7 +142,7 @@ Compute the ratio :   (fₖ - fₖ₊₁)/(mₖ(0)-mₖ(sₖ)) , all the data ab
 """
 function compute_ratio(s_a :: struct_algo{T,Y}, s_k :: AbstractVector{Y}) where T where Y <: Number
     fxₖ = s_a.tpl_f[Int(s_a.index)] :: Y
-    fxₖ₊₁ = PartiallySeparableNLPModel.evaluate_SPS(s_a.sps, s_a.tpl_x[Int(s_a.index)] + s_k) :: Y
+    fxₖ₊₁ = PartiallySeparableNLPModels.evaluate_SPS(s_a.sps, s_a.tpl_x[Int(s_a.index)] + s_k) :: Y
     s_a.n_eval_obj += 1
     quadratic_approximation = approx_quad(s_a, s_k) :: Y
     num = fxₖ - fxₖ₊₁ :: Y
@@ -183,9 +183,9 @@ function update_PSR1!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         s_a.tpl_f[Int(s_a.index)] = fxₖ₊₁
         s_a.tpl_x[Int(s_a.index)] = s_a.tpl_x[Int(other_index(s_a))] + s_k
 
-        PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
-        PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
-        PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+        PartiallySeparableNLPModels.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
+        PartiallySeparableNLPModels.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
+        PartiallySeparableNLPModels.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
         s_a.n_eval_grad += 1
 
         update_SPS_SR1!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
@@ -227,8 +227,8 @@ function iterations_TR_PSR1!(s_a :: struct_algo{T,Y},
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
-    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
-		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModel.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
+    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModels.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModels.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
 
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
 
@@ -369,9 +369,9 @@ function update_PBGS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         s_a.tpl_f[Int(s_a.index)] = fxₖ₊₁
         s_a.tpl_x[Int(s_a.index)] = s_a.tpl_x[Int(other_index(s_a))] + s_k
 
-        PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
-        PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
-        PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+        PartiallySeparableNLPModels.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
+        PartiallySeparableNLPModels.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
+        PartiallySeparableNLPModels.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
         s_a.n_eval_grad += 1
 
         update_SPS_BFGS!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
@@ -414,8 +414,8 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y},
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
-    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
-		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModel.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
+    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModels.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModels.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
     @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
     while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elasped_time < max_time
@@ -551,9 +551,9 @@ function update_PBS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         s_a.tpl_f[Int(s_a.index)] = fxₖ₊₁
         s_a.tpl_x[Int(s_a.index)] = s_a.tpl_x[Int(other_index(s_a))] + s_k
 
-        PartiallySeparableNLPModel.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
-        PartiallySeparableNLPModel.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
-        PartiallySeparableNLPModel.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
+        PartiallySeparableNLPModels.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
+        PartiallySeparableNLPModels.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
+        PartiallySeparableNLPModels.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
         s_a.n_eval_grad += 1
 
         update_SPS_mix_SR1_BFGS!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
@@ -595,8 +595,8 @@ function iterations_TR_PBS!(s_a :: struct_algo{T,Y},
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
-    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModel.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
-		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModel.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
+    # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModels.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
+		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModels.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
 
     @printf "%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 

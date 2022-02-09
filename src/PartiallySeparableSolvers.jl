@@ -11,7 +11,7 @@ module PartiallySeparableSolvers
     using Printf
     #=----------------------------------------------------------------------------------------------------------=#
     #Ajout
-    using CalculusTreeTools, PartiallySeparableNLPModel
+    using CalculusTreeTools, PartiallySeparableNLPModels
     #=----------------------------------------------------------------------------------------------------------=#
     # ..implementation_expr_tree,  ..PartiallySeparableStructure, ..trait_expr_tree,
 

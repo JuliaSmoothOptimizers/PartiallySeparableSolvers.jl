@@ -1,7 +1,7 @@
 n = 100
 (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
 obj_expr_tree = CalculusTreeTools.transform_to_expr_tree(obj)
-Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj, n)
+Struct_PS = PartiallySeparableNLPModels.deduct_partially_separable_structure(obj, n)
 
 JuMP_nlp = MathOptNLPModel(m_ros, name="Ros "*string(n))
 x = create_initial_point_Rosenbrock(n)
@@ -10,35 +10,35 @@ x = create_initial_point_Rosenbrock(n)
 	x = ones(n)
 	x_1 = (tmp -> 2*tmp).(x)
 
-	f_approx = ( elm_fun :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_hessian{Float64}( Array{Float64,2}(zeros(Float64, length(elm_fun.used_variable), length(elm_fun.used_variable)) ) ) )
-	f = (y :: PartiallySeparableNLPModel.element_function -> PartiallySeparableNLPModel.element_gradient{typeof(x[1])}(Vector{typeof(x[1])}(undef, length(y.used_variable) )) )
+	f_approx = ( elm_fun :: PartiallySeparableNLPModels.element_function -> PartiallySeparableNLPModels.element_hessian{Float64}( Array{Float64,2}(zeros(Float64, length(elm_fun.used_variable), length(elm_fun.used_variable)) ) ) )
+	f = (y :: PartiallySeparableNLPModels.element_function -> PartiallySeparableNLPModels.element_gradient{typeof(x[1])}(Vector{typeof(x[1])}(undef, length(y.used_variable) )) )
 
-	exact_Hessian = PartiallySeparableNLPModel.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
-	approx_hessian_SR1 = PartiallySeparableNLPModel.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
-	approx_hessian_BFGS = PartiallySeparableNLPModel.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
+	exact_Hessian = PartiallySeparableNLPModels.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
+	approx_hessian_SR1 = PartiallySeparableNLPModels.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
+	approx_hessian_BFGS = PartiallySeparableNLPModels.Hess_matrix{Float64}(f_approx.(Struct_PS.structure))
 
-	grad_x = PartiallySeparableNLPModel.grad_vector{typeof(x[1])}( f.(Struct_PS.structure) )
-	grad_x_1 = PartiallySeparableNLPModel.grad_vector{typeof(x[1])}( f.(Struct_PS.structure) )
-	grad_diff = PartiallySeparableNLPModel.grad_vector{typeof(x[1])}( f.(Struct_PS.structure) )
+	grad_x = PartiallySeparableNLPModels.grad_vector{typeof(x[1])}( f.(Struct_PS.structure) )
+	grad_x_1 = PartiallySeparableNLPModels.grad_vector{typeof(x[1])}( f.(Struct_PS.structure) )
+	grad_diff = PartiallySeparableNLPModels.grad_vector{typeof(x[1])}( f.(Struct_PS.structure) )
 
 	s = x_1 - x
-	PartiallySeparableNLPModel.struct_hessian!(Struct_PS, x, exact_Hessian)
-	PartiallySeparableNLPModel.evaluate_SPS_gradient!(Struct_PS, x, grad_x)
-	PartiallySeparableNLPModel.evaluate_SPS_gradient!(Struct_PS, x_1, grad_x_1)
-	PartiallySeparableNLPModel.minus_grad_vec!(grad_x_1, grad_x, grad_diff)
+	PartiallySeparableNLPModels.struct_hessian!(Struct_PS, x, exact_Hessian)
+	PartiallySeparableNLPModels.evaluate_SPS_gradient!(Struct_PS, x, grad_x)
+	PartiallySeparableNLPModels.evaluate_SPS_gradient!(Struct_PS, x_1, grad_x_1)
+	PartiallySeparableNLPModels.minus_grad_vec!(grad_x_1, grad_x, grad_diff)
 
 	#calcul de l'approximation
 	PartiallySeparableSolvers.update_SPS_SR1!(Struct_PS, exact_Hessian, approx_hessian_SR1, grad_diff, s)
 	PartiallySeparableSolvers.update_SPS_SR1!(Struct_PS, exact_Hessian, approx_hessian_BFGS, grad_diff, s)
 	# mettre les informations sous des formats comparable (Vector)
-	dif_gradient = PartiallySeparableNLPModel.build_gradient(Struct_PS, grad_diff)
-	Bs_SR1 = PartiallySeparableNLPModel.product_matrix_sps(Struct_PS, approx_hessian_SR1, s)
-	Bs_BFGS = PartiallySeparableNLPModel.product_matrix_sps(Struct_PS, approx_hessian_BFGS, s)
+	dif_gradient = PartiallySeparableNLPModels.build_gradient(Struct_PS, grad_diff)
+	Bs_SR1 = PartiallySeparableNLPModels.product_matrix_sps(Struct_PS, approx_hessian_SR1, s)
+	Bs_BFGS = PartiallySeparableNLPModels.product_matrix_sps(Struct_PS, approx_hessian_BFGS, s)
 
 	check_is_pos_def = (elmt_hess -> isposdef(elmt_hess.elmt_hess) )
 	my_and = ( (x,y) -> x && y )
 	@test mapreduce(check_is_pos_def, my_and, approx_hessian_BFGS.arr)	
-	sp_approx_BFGS = PartiallySeparableNLPModel.construct_Sparse_Hessian(Struct_PS, approx_hessian_BFGS)
+	sp_approx_BFGS = PartiallySeparableNLPModels.construct_Sparse_Hessian(Struct_PS, approx_hessian_BFGS)
 	@test isposdef(sp_approx_BFGS)
 
 	#test

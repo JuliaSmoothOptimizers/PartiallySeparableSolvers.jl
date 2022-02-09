@@ -67,9 +67,9 @@ x_pbs = ges_pbs.solution
 H_pbfgs = zeros(n,n)
 H_pbsr1 = zeros(n,n)
 H_pbs = zeros(n,n)
-H_pbfgs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
-H_psr1 = PartiallySeparableNLPModel.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
-H_pbs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
+H_pbfgs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
+H_psr1 = PartiallySeparableNLPModels.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
+H_pbs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
 
 # interval | itération | ni = 2
 # 5 | 5-6
@@ -117,7 +117,7 @@ x_pbs = ges_pbs.solution
 H_pbfgs = zeros(n,n)
 H_pbsr1 = zeros(n,n)
 H_pbs = zeros(n,n)
-H_pbfgs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
-H_psr1 = PartiallySeparableNLPModel.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
-H_pbs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
+H_pbfgs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
+H_psr1 = PartiallySeparableNLPModels.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
+H_pbs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
 

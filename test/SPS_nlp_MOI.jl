@@ -1,7 +1,7 @@
 n = 100
 (m_ros,evaluator,obj) = create_Rosenbrock_JuMP_Model(n)
 obj_expr_tree = CalculusTreeTools.transform_to_expr_tree(obj)
-Struct_PS = PartiallySeparableNLPModel.deduct_partially_separable_structure(obj, n)
+Struct_PS = PartiallySeparableNLPModels.deduct_partially_separable_structure(obj, n)
 
 JuMP_mod = MathOptNLPModel(m_ros, name="Ros "*string(n))
 

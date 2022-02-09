@@ -2,7 +2,7 @@ using Test
 using PartiallySeparableSolvers
 
 using JuMP, MathOptInterface, NLPModelsJuMP, LinearAlgebra, SparseArrays, NLPModels, JSOSolvers
-using CalculusTreeTools, PartiallySeparableNLPModel
+using CalculusTreeTools, PartiallySeparableNLPModels
 
 
 function create_initial_point_Rosenbrock(n)

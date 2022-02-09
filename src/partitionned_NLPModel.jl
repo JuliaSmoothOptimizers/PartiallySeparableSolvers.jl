@@ -1,4 +1,4 @@
-using CalculusTreeTools, PartiallySeparableNLPModel
+using CalculusTreeTools, PartiallySeparableNLPModels
 using LinearOperators, NLPModels, JuMP, FastClosures
 
 import NLPModels: increment!, obj,grad!, hprod!, hprod
@@ -47,13 +47,13 @@ end
 
 function NLPModels.obj(nlp :: PartionnedNLPModel{T,Y}, x :: AbstractVector{Y}) where T where Y <: Number
     increment!(nlp, :neval_obj)
-    return PartiallySeparableNLPModel.evaluate_SPS(nlp.s_a.sps, x)
+    return PartiallySeparableNLPModels.evaluate_SPS(nlp.s_a.sps, x)
 end
 
 function NLPModels.grad!(nlp :: PartionnedNLPModel{T,Y}, x :: AbstractVector{Y}, g :: AbstractVector{Y}) where T where Y <: Number
   increment!(nlp, :neval_grad)
-  PartiallySeparableNLPModel.evaluate_SPS_gradient!(nlp.s_a.sps, x, nlp.s_a.tpl_g[1])
-  PartiallySeparableNLPModel.build_gradient!(nlp.s_a.sps, nlp.s_a.tpl_g[1], g)
+  PartiallySeparableNLPModels.evaluate_SPS_gradient!(nlp.s_a.sps, x, nlp.s_a.tpl_g[1])
+  PartiallySeparableNLPModels.build_gradient!(nlp.s_a.sps, nlp.s_a.tpl_g[1], g)
 end
 
 function NLPModels.grad(nlp :: PartionnedNLPModel{T,Y}, x :: AbstractVector{Y}) where T where Y <: Number
@@ -69,7 +69,7 @@ function NLPModels.hprod!(nlp :: PartionnedNLPModel{T,Y},
                   obj_weight=1.0,
                   y=Float64[]) where T where Y <: Number
   nlp.counters.neval_hprod += 1
-  PartiallySeparableNLPModel.Hv!(hv, nlp.s_a.sps, x, v) 
+  PartiallySeparableNLPModels.Hv!(hv, nlp.s_a.sps, x, v) 
 end                 
 
 function NLPModels.hprod!(nlp :: PartionnedNLPModel{T,Y},                     
@@ -78,7 +78,7 @@ function NLPModels.hprod!(nlp :: PartionnedNLPModel{T,Y},
                   obj_weight=1.0,
                   y=Float64[]) where T where Y <: Number
   nlp.counters.neval_hprod += 1
-  PartiallySeparableNLPModel.Hv!(hv, nlp.s_a.sps, nlp.s_a.sps.x, v)
+  PartiallySeparableNLPModels.Hv!(hv, nlp.s_a.sps, nlp.s_a.sps.x, v)
 end 
 
 function NLPModels.hprod(nlp :: PartionnedNLPModel{T,Y},
@@ -87,7 +87,7 @@ function NLPModels.hprod(nlp :: PartionnedNLPModel{T,Y},
                   obj_weight=1.0,
                   y=Float64[]) where T where Y <: Number
   nlp.counters.neval_hprod += 1
-  PartiallySeparableNLPModel.Hv(nlp.s_a.sps, x, v) 
+  PartiallySeparableNLPModels.Hv(nlp.s_a.sps, x, v) 
 end
 
 function NLPModels.hprod(nlp :: PartionnedNLPModel{T,Y},
@@ -95,7 +95,7 @@ function NLPModels.hprod(nlp :: PartionnedNLPModel{T,Y},
                   obj_weight=1.0,
                   y=Float64[]) where T where Y <: Number
   nlp.counters.neval_hprod += 1
-  hv = similar(v) ; PartiallySeparableNLPModel.Hv!(hv, nlp.s_a.sps, nlp.s_a.sps.x, v)
+  hv = similar(v) ; PartiallySeparableNLPModels.Hv!(hv, nlp.s_a.sps, nlp.s_a.sps.x, v)
   return hv
 end
 
