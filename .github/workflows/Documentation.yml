@@ -1,0 +1,35 @@
+name: Documentation
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1.7'
+      - name: Installing non-registered dependencies
+        run: |
+          using Pkg
+          pkg1 = PackageSpec(url = "https://github.com/paraynaud/CalculusTreeTools.jl.git")
+          pkg2 = PackageSpec(url = "https://github.com/paraynaud/PartiallySeparableNLPModels.jl.git")
+          pkg_list = [pkg1, pkg2]
+          Pkg.add(pkg_list)
+        shell: julia --project=docs --color=yes {0}          
+      - name: Install dependencies
+        run: julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+      - name: Build and deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=docs --color=yes docs/make.jl
+
+
+# using DocumenterTools
+# DocumenterTools.genkeys(user="paraynaud", repo="PartiallySeparableSolvers.jl")

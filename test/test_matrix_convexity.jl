@@ -1,8 +1,3 @@
-using JuMP, MathOptInterface, NLPModelsJuMP, LinearAlgebra, NLPModels, Test
-using CalculusTreeTools, PartiallySeparableNLPModel, PartiallySeparableSolvers
-
-# include("test\\test_matrix_convexity.jl")
-
 # création de la solution
 function create_solution(a,b,nb_inter)
     n_total = nb_inter + 1   # incluant a et b
@@ -11,6 +6,7 @@ function create_solution(a,b,nb_inter)
     xf = x_temp[2:end-1]
     return n_total,h,xf
 end
+
 # création du point initial (perturbation du point final)
 function create_initial_point_convex(a,b,nb_inter)
     n_total,h,xf = create_solution(a,b,nb_inter)
@@ -53,7 +49,6 @@ nombre_intervals = 10
 n,h,x0,xf = create_initial_point_convex(0,1,nombre_intervals)
 (m,JuMP_nlp, SPS_nlp) = create_convex_JuMP_Model(;nb_inter=nombre_intervals)
 
-
 # Lancement des solvers
 sps_pbfgs, ges_pbfgs = PartiallySeparableSolvers.s_a_PBFGS(JuMP_nlp)
 sps_psr1, ges_psr1 = PartiallySeparableSolvers.s_a_PSR1(JuMP_nlp)
@@ -72,18 +67,15 @@ x_pbs = ges_pbs.solution
 H_pbfgs = zeros(n,n)
 H_pbsr1 = zeros(n,n)
 H_pbs = zeros(n,n)
-H_pbfgs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
-H_psr1 = PartiallySeparableNLPModel.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
-H_pbs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
-
+H_pbfgs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
+H_psr1 = PartiallySeparableNLPModels.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
+H_pbs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
 
 # interval | itération | ni = 2
 # 5 | 5-6
 # 10 | 8
 # 100 | 16-25
 # 200 | 21-24
-
-
 
 function create_convex_separable_JuMP_Model(;
 		n::Integer=10,
@@ -93,13 +85,11 @@ function create_convex_separable_JuMP_Model(;
 	m = Model()
 	@variable(m, x[1:n])
 	mod(n/2,2) != 0 && error("n n'est pas un multiple de 2")
-	# @NLobjective(m, Min, sum( exp(x[2*j-1]^2 + x[2*j]^2) for j in 1:Integer(n/2)) )
 	@NLobjective(m, Min, sum( (5*x[2*j-1] + x[2*j])^2 for j in 1:Integer(n/2)) )
 	evaluator = JuMP.NLPEvaluator(m)
 	MathOptInterface.initialize(evaluator, [:ExprGraph, :Hess])
 	obj = MathOptInterface.objective_expr(evaluator)
-	vec_var = JuMP.all_variables(m)
-	# x0 = ones(n)
+	vec_var = JuMP.all_variables(m)	
 	x0 = rand(n)
 	JuMP.set_start_value.(vec_var, x0)
 	JuMP_nlp = MathOptNLPModel(m, name=_string*string(n))
@@ -107,9 +97,8 @@ function create_convex_separable_JuMP_Model(;
 	return (m, JuMP_nlp, SPS_nlp)
 end
 
-n = 1000
+n = 100
 (m,JuMP_nlp, SPS_nlp) = create_convex_separable_JuMP_Model(;n=n)
-
 
 # Lancement des solvers
 sps_pbfgs, ges_pbfgs = PartiallySeparableSolvers.s_a_PBFGS(JuMP_nlp)
@@ -124,12 +113,11 @@ x_pbs = ges_pbs.solution
 # @test ges_pbs.solution ≈ xf atol=1e-6
 # @test ges_psr1.solution ≈ xf atol=1e-6
 
-
-# Récupération des métrices
+# Building the matrices
 H_pbfgs = zeros(n,n)
 H_pbsr1 = zeros(n,n)
 H_pbs = zeros(n,n)
-H_pbfgs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
-H_psr1 = PartiallySeparableNLPModel.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
-H_pbs = PartiallySeparableNLPModel.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
+H_pbfgs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbfgs.sps, sps_pbfgs.tpl_B[Int(sps_pbfgs.index)])
+H_psr1 = PartiallySeparableNLPModels.construct_full_Hessian(sps_psr1.sps, sps_psr1.tpl_B[Int(sps_psr1.index)])
+H_pbs = PartiallySeparableNLPModels.construct_full_Hessian(sps_pbs.sps, sps_pbs.tpl_B[Int(sps_pbs.index)])
 

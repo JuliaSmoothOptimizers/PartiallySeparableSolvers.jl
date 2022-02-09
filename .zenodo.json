@@ -1,0 +1,20 @@
+{
+  "description": "A package PartiallySeparableSolvers.jl",
+  "title": "PartiallySeparableSolvers.jl",
+  "upload_type": "software",
+  "publication_date": "2019-02-07",
+  "creators": [
+    {
+      "affiliation": "\u00c9cole Polytechnique/GERAD - Montr\u00e9al",
+      "name": "Paul Raynaud"
+    }
+  ],
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "scheme": "url",
+      "identifier": "https://github.com/paraynaud/PartiallySeparableSolvers.jl/releases/latest",
+      "relation": "isSupplementTo"
+    }
+  ]
+}
