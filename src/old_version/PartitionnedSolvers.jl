@@ -351,19 +351,21 @@ P-BFGS
 
 
 """
-    update_PBGS!(struct_algo, B)
+    update_PBFGS!(struct_algo, B)
 This function perform a step of a Trust-Region method using a conjuguate-gragient method to solve the sub-problem of the Trust-Region.
 B is the LinearOperator needed by the cg (conjuguate-gragient method). struct_algo stored all the data relative to the problem and is modified if step is taken .
 """
-function update_PBGS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
+function update_PBFGS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
     atol :: Real=√eps(s_a.tpl_x[Int(s_a.index)]),
     rtol :: Real=√eps(s_a.tpl_x[Int(s_a.index)]),
     kwawrgs...
     ) where T where Y <: Number
 
     n = s_a.sps.n_var
-    (s_k, info) = Krylov.cg(B, - s_a.grad,atol=atol, rtol=rtol, radius = s_a.Δ, itmax=max(2 * n, 50)) :: Tuple{Array{Y,1},Krylov.SimpleStats{Y}}
+    (s_k, info) = Krylov.cg(B, - s_a.grad,atol=atol, rtol=rtol, radius = s_a.Δ, itmax=max(2 * n, 50)) :: Tuple{Array{Y,1},Krylov.SimpleStats{Y}}		
     (ρₖ, fxₖ₊₁) = compute_ratio(s_a, s_k :: Vector{Y})
+		# @show norm(s_k,2), s_a.Δ, ρₖ
+		# @show info
     if ρₖ > s_a.η #= on accepte le nouveau point =#
         s_a.index = other_index(s_a)
         s_a.tpl_f[Int(s_a.index)] = fxₖ₊₁
@@ -373,11 +375,15 @@ function update_PBGS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
         PartiallySeparableNLPModels.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)
         PartiallySeparableNLPModels.minus_grad_vec!(s_a.tpl_g[Int(s_a.index)], s_a.tpl_g[Int(other_index(s_a))], s_a.y)
         s_a.n_eval_grad += 1
-
+				# @show s_a.y, s_k
+				# @show s_a.tpl_g[Int(s_a.index)]
+				# @show s_a.tpl_g[Int(other_index(s_a))]
         update_SPS_BFGS!(s_a.sps, s_a.tpl_B[Int(other_index(s_a))], s_a.tpl_B[Int(s_a.index)], s_a.y, s_k) #on obtient notre nouveau B_k
+				# B = Matrix(PartiallySeparableNLPModels.construct_Sparse_Hessian(s_a.sps, s_a.tpl_B[Int(s_a.index)]))
+				# @show B
     else #= println("changement par référence, la structure ne bouge donc pas") =#
     end
-
+		@show ρₖ
     if ρₖ >= s_a.η₁
         if norm(s_k) < 0.8 * s_a.Δ #= le rayon ne bouge pas les conditions sur la norme ne sont pas satisfaites =#
             s_a.Δ = s_a.Δ
@@ -394,8 +400,8 @@ end
 
 #fonction traitant le coeur de l'algorithme, réalise principalement la boucle qui incrémente un compteur et met à jour la structure d'algo par effet de bord
 # De plus on effectue tous les affichage par itération dans cette fonction raison des printf
-iterations_TR_PBGFS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}, start_time :: Float64; kwargs...) where T where Y <: Number = begin  (cpt, elapsed_time) = iterations_TR_PBGFS!(s_a, start_time; kwargs...); vec_cpt[1] = cpt ; return (vec_cpt[1], elapsed_time) end
-function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y},
+iterations_TR_PBFGS!(s_a :: struct_algo{T,Y}, vec_cpt :: Vector{Int}, start_time :: Float64; kwargs...) where T where Y <: Number = begin  (cpt, elapsed_time) = iterations_TR_PBFGS!(s_a, start_time; kwargs...); vec_cpt[1] = cpt ; return (vec_cpt[1], elapsed_time) end
+function iterations_TR_PBFGS!(s_a :: struct_algo{T,Y},
         start_time :: Float64;
         max_eval :: Int=10000,
         max_time :: Float64=30.0,
@@ -413,17 +419,17 @@ function iterations_TR_PBGFS!(s_a :: struct_algo{T,Y},
     ∇fNorm2 = nrm2(n, ∇f₀)
     cgtol = one(T2)  # Must be ≤ 1.
     cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
-
+		
     # opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(n, n, true, true, x -> PartiallySeparableNLPModels.product_matrix_sps(s.sps, s.tpl_B[Int(s.index)], x) ) :: LinearOperator{Y}
 		opB(s :: struct_algo{T,Y}) = LinearOperators.LinearOperator(Y,n, n, true, true, ((res,v) -> PartiallySeparableNLPModels.product_matrix_sps!(s.sps, s.tpl_B[Int(s.index)], v, res)) )
     @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] ∇fNorm2 s_a.Δ
 
     while ( (norm(s_a.grad,2) > s_a.ϵ ) && (norm(s_a.grad,2) > s_a.ϵ * ∇fNorm2)  &&  s_a.n_eval_obj < max_eval ) && elasped_time < max_time
-        update_PBGS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
+        update_PBFGS!(s_a, opB(s_a); atol=atol, rtol=cgtol)
         cpt = cpt + 1
-        if mod(cpt,500) == 0
+        # if mod(cpt,500) == 0
             @printf "\n%3d \t%8.1e \t%7.1e \t%7.1e \n" cpt s_a.tpl_f[Int(s_a.index)] norm(s_a.grad,2) s_a.Δ
-        end
+        # end
         elasped_time = time() - start_time
     end
 
@@ -457,7 +463,7 @@ function _solver_TR_PBFGS!(obj_Expr :: T, n :: Int, x_init :: AbstractVector{Y},
     pointer_cpt = Array{Int}([0])
     start_time = time()
     # try
-        (cpt, elapsed_time) = iterations_TR_PBGFS!(s_a, pointer_cpt, start_time; kwargs...)
+        (cpt, elapsed_time) = iterations_TR_PBFGS!(s_a, pointer_cpt, start_time; kwargs...)
     # catch e
     #     @show e
     #     return (zeros(n),s_a,-1)
