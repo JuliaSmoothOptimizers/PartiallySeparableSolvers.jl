@@ -4,9 +4,9 @@ module Mod_TR_CG_part_data
 	using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
 	using Printf, SolverCore, SolverTools
 	
-	export Generic_algorithm_wrapper
+	export generic_algorithm_wrapper
 
-	function Generic_algorithm_wrapper(nlp :: N, part_data :: P;
+	function generic_algorithm_wrapper(nlp :: N, part_data :: P;
 		max_eval :: Int=10000,
 		max_iter::Int=10000,
 		start_time::Float64=time(),
@@ -48,7 +48,6 @@ module Mod_TR_CG_part_data
 			println("Unknown ❌")
 		end
 		ges = GenericExecutionStats(status, nlp, solution=x, iter=iter, dual_feas = nrm_grad, objective = f, elapsed_time = Δt)
-		# ges = status
 		return ges		
 	end
 
@@ -93,8 +92,8 @@ module Mod_TR_CG_part_data
 		relative(n,gₖ,ϵ,∇fNorm2) = norm(gₖ,2) > ϵ * ∇fNorm2
 		_max_iter(iter, max_iter) = iter < max_iter
 		_max_time(start_time) = (time() - start_time) < max_time
-		while absolute(n,gₖ,ϵ) && relative(n,gₖ,ϵ,∇fNorm2) && _max_iter(iter, max_iter) & _max_time(start_time) && isnan(ρₖ)==false# stop condition
-			@printf "%3d %4g %8.1e %7.1e %7.1e %7.1e %7.1e " iter (time() - start_time) fₖ norm(gₖ,2) norm(x-ones(n),2) Δ ρₖ
+		while absolute(n,gₖ,ϵ) && relative(n,gₖ,ϵ,∇fNorm2) && _max_iter(iter, max_iter) & _max_time(start_time)# stop condition
+			@printf "%3d %4g %8.1e %7.1e %7.1e" iter (time() - start_time) fₖ norm(gₖ,2) Δ
 			iter += 1			
 			cg_res = Krylov.cg(B, - gₖ, atol=T(atol), rtol=cgtol, radius = T(Δ), itmax=max(2*n,50))
 			sₖ .= cg_res[1]  # result of the linear system solved by Krylov.cg
@@ -111,7 +110,7 @@ module Mod_TR_CG_part_data
 				fₖ = evaluate_obj_part_data(part_data, x)
 				@printf "❌\n"
 			end
-
+			# trust region update
 			(ρₖ >= η₁ && norm(sₖ, 2) >= 0.8*Δ) ? Δ = ϕ*Δ : Δ = Δ
 			(ρₖ <= η) && (Δ = 1/ϕ*Δ)			
 		end
@@ -124,7 +123,6 @@ module Mod_TR_CG_part_data
 		mₖ₊₁ = fₖ + dot(gₖ,sₖ) + 1/2 * (dot((B*sₖ),sₖ))
 		fₖ₊₁ = evaluate_obj_part_data(part_data, x+sₖ)
 		ρₖ = (fₖ - fₖ₊₁)/(fₖ - mₖ₊₁)
-		@show ρₖ, mₖ₊₁
 		return (ρₖ,fₖ₊₁)
 	end
 
