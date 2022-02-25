@@ -48,7 +48,7 @@ to the BFGS update method.
                         B :: AbstractArray{Y,2}, #current approcimation of the Hessian
                         B_1 :: AbstractArray{Y,2}) where Y <: Number #Array that will store the next approximation of the Hessian
 
-        if (Δx' * y > 0 )
+        if (dot(Δx', y) > 0 )
             @fastmath α = 1 / (y' * Δx)
             @fastmath β = - (1 / (Δx' * B * Δx) )
             @fastmath u = y
@@ -56,8 +56,10 @@ to the BFGS update method.
             @fastmath terme1 = (α * u * u')
             @fastmath terme2 = (β * v * v')
             @fastmath @inbounds B_1[:] = (B + terme1 + terme2) :: Array{Y,2}
+						return 1
         else
             @inbounds B_1[:] = B :: Array{Y,2}
+						return 0
         end
     end
 
@@ -102,13 +104,15 @@ the update, we need the grad_vector y and the vector s. B, B_1 and y use structu
                               s :: AbstractVector{Y}) where T where Y <: Number
         l_elmt_fun = length(sps.structure)
          # @Threads.threads for i in 1:l_elmt_fun
+				 acc = 0
          for i in 1:l_elmt_fun
             @inbounds s_elem = Array(view(s, sps.structure[i].used_variable))
             @inbounds y_elem = y.arr[i].g_i
             @inbounds B_elem = B.arr[i].elmt_hess
             @inbounds B_elem_1 = B_1.arr[i].elmt_hess
-            update_BFGS!(s_elem, y_elem, B_elem, B_elem_1)
+            acc += update_BFGS!(s_elem, y_elem, B_elem, B_elem_1)
         end
+				println("PBFGS (old) : $(acc)/$(l_elmt_fun)")
     end
 
 
