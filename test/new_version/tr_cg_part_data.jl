@@ -1,4 +1,4 @@
-@testset "PBFGS-PLBFGS" begin 
+@testset "PBFGS-PLBFGS Rosenbrock" begin 
 	n = 10
 	ros_mnlp = create_Rosenbrock_MathOptModel(n)		
 	ros_adnlp = Rosenbrock_ADNLPModel(n)
@@ -18,4 +18,15 @@
 	@test isapprox(norm(ges_adnlp_pbfgs.solution - ones(n), 2), 0, atol=1e-4)
 	@test isapprox(norm(ges_mnlp_plbfgs.solution - ones(n), 2), 0, atol=1e-4)
 	@test isapprox(norm(ges_adnlp_plbfgs.solution - ones(n), 2), 0, atol=1e-4)
+end 
+
+@testset "PBFGS-PLBFGS Rosenbrock" begin 
+	n = 10
+	nlp = MathOptNLPModel(OptimizationProblems.arwhead(n), name="arwhead " * string(n))	
+
+	ges_pbfgs = PBFGS2(nlp)
+	ges_plbfgs = PLBFGS(nlp)
+
+	@test ges_pbfgs.status == :first_order
+	@test ges_plbfgs.status == :first_order	
 end 
