@@ -1,7 +1,6 @@
 using JSOSolvers, SolverBenchmark, SolverTools, Plots, Printf, DataFrames, NLPModels
 using ADNLPModels
 using PartiallySeparableSolvers
-using Revise 
 
 
 """
