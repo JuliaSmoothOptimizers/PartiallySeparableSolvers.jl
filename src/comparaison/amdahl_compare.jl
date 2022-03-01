@@ -58,11 +58,13 @@ solver = Dict{Symbol,Function}(
 # :trunk_lsr1_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LSR1Model(prob); kwargs...),
 # :trunk_lbfgs_JuMP => (prob; kwargs...) -> JSOSolvers.trunk(NLPModels.LBFGSModel(prob); kwargs...),
 # :trunk_Hv_SPS => (prob; kwargs...) -> JSOSolvers.trunk(PartiallySeparableSolvers.PartionnedNLPModel(prob); kwargs...),
-:my_lbfgs => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
-:my_lsr1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
-:bfgs_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
-:sr1_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
-:bs_SPS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
+:LBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LBFGS(prob;kwargs...)),
+:LSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.my_LSR1(prob;kwargs...)),
+:PBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
+:PBFGS2 => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS2(prob; kwargs...)),
+:PLBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PLBFGS(prob; kwargs...)),
+:PSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PSR1(prob; kwargs...)),
+:PBS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBS(prob; kwargs...)),
 # :p_trunk => ((prob;kwargs...) -> PartiallySeparableSolvers.PTRUNK(prob; kwargs...))
 )
 
@@ -70,10 +72,10 @@ solver = Dict{Symbol,Function}(
 
 
 keys_hess = [:trunk_Hv_JuMP, :trunk_Hv_adnlpmodel, :trunk_Hv_SPS]
-# keys_bfgs = [:trunk_lbfgs_JuMP, :bfgs_SPS, :bs_SPS]
-keys_bfgs = [:my_lbfgs, :bfgs_SPS, :bs_SPS]
-# keys_sr1 =  [:trunk_lsr1_JuMP, :sr1_SPS, :bs_SPS ]
-keys_sr1 =  [:my_lsr1, :sr1_SPS, :bs_SPS ]
+# keys_bfgs = [:trunk_lbfgs_JuMP, :PBFGS, :PBS]
+keys_bfgs = [:LBFGS, :PBFGS, :PBS]
+# keys_sr1 =  [:trunk_lsr1_JuMP, :PSR1, :PBS ]
+keys_sr1 =  [:LSR1, :PSR1, :PBS ]
 
 
 #= Lancement du benchmark sur les problèmes générés, sur les solvers défini dans la variable solvers =#

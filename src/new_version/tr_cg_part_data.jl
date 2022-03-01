@@ -6,6 +6,15 @@ module Mod_TR_CG_part_data
 	
 	export generic_algorithm_wrapper
 
+	mutable struct Counter
+		neval_obj :: Int
+		neval_grad :: Int
+		neval_Hprod :: Int
+	end
+	increase_obj!(c :: Counter) = c.neval_obj +=1
+	increase_grad!(c :: Counter) = c.neval_grad +=1
+	increase_Hv(c :: Counter) = c.neval_Hprod +=1
+
 	function generic_algorithm_wrapper(nlp :: N, part_data :: P;
 		max_eval :: Int=10000,
 		max_iter::Int=10000,
@@ -20,15 +29,19 @@ module Mod_TR_CG_part_data
 		∇f₀ = evaluate_grad_part_data(part_data, x₀)
 		∇fNorm2 = norm(∇f₀,2)
 
+		cpt = Counter(0,0,0)
 		println("Start: "*name)
-		(x,iter) = TR_CG_PD(part_data; max_eval=max_eval, max_iter=max_iter, max_time=max_time, ∇f₀=∇f₀, kwargs...)
+		(x,iter) = TR_CG_PD(part_data; max_eval=max_eval, max_iter=max_iter, max_time=max_time, ∇f₀=∇f₀, cpt=cpt, kwargs...)
 
 		Δt = time() - start_time
 		f = evaluate_obj_part_data(part_data, x)
 		g = evaluate_grad_part_data(part_data, x)
 		nrm_grad = norm(g,2)
 		
-
+		nlp.counters.neval_obj = cpt.neval_obj
+    nlp.counters.neval_grad = cpt.neval_grad
+		nlp.counters.neval_hprod = cpt.neval_Hprod
+		
 		absolute(n,gₖ,ϵ) = norm(gₖ,2) < ϵ
 		relative(n,gₖ,ϵ,∇fNorm2) = norm(gₖ,2) < ϵ * ∇fNorm2
 		_max_iter(iter, max_iter) = iter >= max_iter
@@ -67,6 +80,7 @@ module Mod_TR_CG_part_data
 		δ::Float64=1.,
 		ϕ::Float64=2.,
 		∇f₀::AbstractVector=PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x),
+		cpt::Counter=Counter(0,0,0),
 		iter_print::Int64=Int(floor(max_iter/100)),
 		T=eltype(x),
 		kwargs...,
@@ -93,21 +107,23 @@ module Mod_TR_CG_part_data
 		_max_iter(iter, max_iter) = iter < max_iter
 		_max_time(start_time) = (time() - start_time) < max_time
 		while absolute(n,gₖ,ϵ) && relative(n,gₖ,ϵ,∇fNorm2) && _max_iter(iter, max_iter) & _max_time(start_time)# stop condition
-			@printf "%3d %4g %8.1e %7.1e %7.1e" iter (time() - start_time) fₖ norm(gₖ,2) Δ
+			@printf "%3d %4g %8.1e %7.1e %7.1e \t " iter (time() - start_time) fₖ norm(gₖ,2) Δ
 			iter += 1			
 			cg_res = Krylov.cg(B, - gₖ, atol=T(atol), rtol=cgtol, radius = T(Δ), itmax=max(2*n,50))
 			sₖ .= cg_res[1]  # result of the linear system solved by Krylov.cg
 			
-			(ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ) # we compute the ratio
+			(ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt=cpt) # we compute the ratio			
 			# step acceptance + update f,g
 			if ρₖ > η
 				x .= x .+ sₖ
 				fₖ = fₖ₊₁
 				PartiallySeparableNLPModels.update!(part_data, sₖ)
 				PartiallySeparableNLPModels.evaluate_grad_part_data!(gₖ, part_data, x)
+				increase_grad!(cpt)
 				@printf "✅\n"
 			else
-				fₖ = evaluate_obj_part_data(part_data, x)
+				fₖ = fₖ
+				# fₖ = evaluate_obj_part_data(part_data, x)
 				@printf "❌\n"
 			end
 			# trust region update
@@ -119,9 +135,10 @@ module Mod_TR_CG_part_data
 		return (x, iter)
 	end
 
-	function compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::P, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}) where {T <: Number, P <: PartiallySeparableNLPModels.PartitionedData}
+	function compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::P, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}; cpt::Counter=Counter(0,0,0)) where {T <: Number, P <: PartiallySeparableNLPModels.PartitionedData}
 		mₖ₊₁ = fₖ + dot(gₖ,sₖ) + 1/2 * (dot((B*sₖ),sₖ))
 		fₖ₊₁ = evaluate_obj_part_data(part_data, x+sₖ)
+		increase_obj!(cpt)
 		ρₖ = (fₖ - fₖ₊₁)/(fₖ - mₖ₊₁)
 		return (ρₖ,fₖ₊₁)
 	end
