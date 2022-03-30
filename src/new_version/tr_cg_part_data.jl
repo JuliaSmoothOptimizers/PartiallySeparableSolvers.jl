@@ -93,7 +93,7 @@ module Mod_TR_CG_part_data
 				
 		fₖ = evaluate_obj_part_data(part_data, x)
 		
-		@printf "iter temps fₖ norm(gₖ,2) Δ ρₖ\n" 
+		@printf "iter temps fₖ norm(gₖ,2) Δ\n" 
 
 		cgtol = one(T)  # Must be ≤ 1.
 		cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
@@ -113,31 +113,32 @@ module Mod_TR_CG_part_data
 			sₖ .= cg_res[1]  # result of the linear system solved by Krylov.cg
 			
 			(ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt=cpt) # we compute the ratio			
-			# step acceptance + update f,g
+
 			if ρₖ > η
 				x .= x .+ sₖ
-				fₖ = fₖ₊₁
-				PartiallySeparableNLPModels.update!(part_data, sₖ)
-				PartiallySeparableNLPModels.evaluate_grad_part_data!(gₖ, part_data, x)
+				fₖ = fₖ₊₁				
+				PartiallySeparableNLPModels.update_nlp!(part_data, sₖ; name=part_data.name)
+				# PartiallySeparableNLPModels.update_nlp!(part_data, x, sₖ; name=part_data.name)
+				gₖ .= PartitionedStructures.get_v(get_pg(part_data))
 				increase_grad!(cpt)
 				@printf "✅\n"
 			else
 				fₖ = fₖ
-				# fₖ = evaluate_obj_part_data(part_data, x)
 				@printf "❌\n"
 			end
 			# trust region update
 			(ρₖ >= η₁ && norm(sₖ, 2) >= 0.8*Δ) ? Δ = ϕ*Δ : Δ = Δ
 			(ρₖ <= η) && (Δ = 1/ϕ*Δ)			
 		end
-		@printf "%3d %4g %8.1e %7.1e %7.1e %7.1e\n" iter (time() - start_time) fₖ norm(gₖ,2) Δ ρₖ
-
+		@printf "%3d %4g %8.1e %7.1e %7.1e \n" iter (time() - start_time) fₖ norm(gₖ,2) Δ
+		# println(Matrix(part_data.pB))
 		return (x, iter)
 	end
 
 	function compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::P, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}; cpt::Counter=Counter(0,0,0)) where {T <: Number, P <: PartiallySeparableNLPModels.PartitionedData}
 		mₖ₊₁ = fₖ + dot(gₖ,sₖ) + 1/2 * (dot((B*sₖ),sₖ))
-		fₖ₊₁ = evaluate_obj_part_data(part_data, x+sₖ)
+		fₖ₊₁ = evaluate_obj_part_data(part_data, x+sₖ) # the evaluation set partdata.x to x+sₖ
+		set_x!(part_data, x)
 		increase_obj!(cpt)
 		ρₖ = (fₖ - fₖ₊₁)/(fₖ - mₖ₊₁)
 		return (ρₖ,fₖ₊₁)

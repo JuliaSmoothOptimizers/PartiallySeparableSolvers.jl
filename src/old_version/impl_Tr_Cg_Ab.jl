@@ -4,7 +4,7 @@ using SolverTools
 
 
 function compute_ratio(x :: AbstractVector{Y}, f_x :: Y, s :: Vector{Y}, nlp :: AbstractNLPModel , B :: AbstractLinearOperator{Y}, g :: AbstractVector{Y})  where Y <: Number
-    quad_model_s =  f_x + g' * s + 1/2 * ((B * s )' * s)  :: Y
+    quad_model_s =  f_x + g' * s + 1/2 * dot((B * s ), s)  :: Y
     f_next_x = NLPModels.obj(nlp, x+s) :: Y
     num = f_x - f_next_x :: Y
     den = f_x - quad_model_s :: Y
@@ -20,6 +20,7 @@ function upgrade_TR_LO!( pk :: Float64, # value of the ratio
                      x_k :: AbstractVector{T}, # actual point
                      s_k :: AbstractVector{T}, # point found at the iteration k
                      g_k :: AbstractVector{T}, # array of element gradient
+										 y_k :: AbstractVector{T}, # array of element gradient
                      B_k :: AbstractLinearOperator{T}, # SR1 approximation
                      nlp :: AbstractNLPModel ,
                      Δ :: Float64 # radius
@@ -27,11 +28,11 @@ function upgrade_TR_LO!( pk :: Float64, # value of the ratio
      η = 1e-3
      η1 =  0.75
      if pk > η
-         x_k .= x_k + s_k
+         x_k .= x_k .+ s_k
          g_p = Vector{T}(undef,length(g_k))
          g_p .= g_k
          NLPModels.grad!(nlp, x_k, g_k)
-         y_k = g_k - g_p
+         y_k .= g_k .- g_p
          push!(B_k, s_k, y_k)
      else
      end
@@ -68,8 +69,10 @@ function solver_TR_CG_Ab_NLP_LO(nlp :: AbstractNLPModel, B :: AbstractLinearOper
 
     g = Vector{T}(undef,length(x))
     ∇f₀ = Vector{T}(undef,length(x))
+		sk = similar(g)
+		yk = similar(g)
     NLPModels.grad!(nlp, x, ∇f₀)
-    g = ∇f₀
+    g .= ∇f₀
     ∇fNorm2 = nrm2(n, ∇f₀)
 
     f_xk = NLPModels.obj(nlp, x)
@@ -82,11 +85,11 @@ function solver_TR_CG_Ab_NLP_LO(nlp :: AbstractNLPModel, B :: AbstractLinearOper
         cpt = cpt + 1
 
         cg_res = Krylov.cg(B, - g, atol=T2(atol), rtol=cgtol, radius = Δ, itmax=max(2 * n, 50))
-        sk = cg_res[1]  # result of the linear system solved by Krylov.cg
+        sk .= cg_res[1]  # result of the linear system solved by Krylov.cg
 
         (pk, f_temp) = compute_ratio(x, f_xk, sk, nlp, B, g) # we compute the ratio
 
-        Δ = upgrade_TR_LO!(pk, x, sk, g, B, nlp, Δ) # we upgrade x,g,B,∆
+        Δ = upgrade_TR_LO!(pk, x, sk, g, yk, B, nlp, Δ) # we upgrade x,g,B,∆
 
         if  pk > η
             f_xk = f_temp
@@ -137,7 +140,7 @@ function solver_TR_CG_Ab_NLP_LO_res(nlp :: AbstractNLPModel, B :: AbstractLinear
 end
 
 #=
-FIN DE LA PARTIE COMMMUNER
+FIN DE LA PARTIE COMMMUNE
 -------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -227,7 +230,7 @@ function compute_ratio_no_mat(x :: AbstractVector{Y},
                       B :: AbstractLinearOperator{Y},
                       g :: AbstractVector{Y})  where Y <: Number
     PartiallySeparableNLPModels.set_x_sps!(nlp.s_a.sps, x)
-    quad_model_s =  f_x + g' * s + 1/2 * ((B * s )' * s)  :: Y
+    quad_model_s =  f_x + g' * s + 1/2 * dot((B * s ), s)  :: Y
     f_next_x = NLPModels.obj(nlp, x+s) :: Y
     num = f_x - f_next_x :: Y
     den = f_x - quad_model_s :: Y
@@ -249,9 +252,8 @@ function upgrade_TR_LO_no_update!( pk :: Float64, # value of the ratio
      η = 1e-3
      η1 =  0.75
      if pk > η
-         x_k .= x_k + s_k
+         x_k .= x_k .+ s_k
          NLPModels.grad!(nlp, x_k, g_k)
-     else
      end
      if pk >= η1 #now we update ∆
          if norm(s_k, 2) < 0.8 * Δ
@@ -293,6 +295,7 @@ function solver_TR_CG_Ab_NLP_Trunk(nlp :: PartionnedNLPModel{T,Y};
 
     g = Vector{T2}(undef,length(x))
     ∇f₀ = Vector{T2}(undef,length(x))
+		sk = similar(g)
     grad!(nlp, x, ∇f₀)
     g = ∇f₀
     ∇fNorm2 = nrm2(n, ∇f₀)
@@ -311,7 +314,7 @@ function solver_TR_CG_Ab_NLP_Trunk(nlp :: PartionnedNLPModel{T,Y};
         cg_res = Krylov.cg( B(nlp), - g, atol=T2(atol), rtol=cgtol, radius = Δ, itmax=max(2 * n, 50))
 
 
-        sk = cg_res[1]  # result of the linear system solved by Krylov.cg
+        sk .= cg_res[1]  # result of the linear system solved by Krylov.cg
 
         (pk, f_temp) = compute_ratio_no_mat(x, f_xk, sk, nlp, B(nlp), g) # we compute the ratio
 

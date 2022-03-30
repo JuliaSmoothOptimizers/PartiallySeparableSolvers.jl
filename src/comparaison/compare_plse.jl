@@ -72,9 +72,12 @@ const max_eval = 3000
 
 
 solver = Dict{Symbol,Function}(
-:PBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS(prob; kwargs...)),
-:PBFGS2 => ((prob;kwargs...) -> PartiallySeparableSolvers.PBFGS2(prob; kwargs...)),
-:PLBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PLBFGS(prob; kwargs...)),
+:PBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:pbfgs, kwargs...)),
+:PLBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plbfgs, kwargs...)),
+:PSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:psr1, kwargs...)),
+:PLSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plsr1, kwargs...)),
+:PSE => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:pse, kwargs...)),
+:PLSE => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plse, kwargs...)),
 )
 
 solver2 = Dict{Symbol,Function}(
@@ -83,7 +86,7 @@ solver2 = Dict{Symbol,Function}(
 
 
 # keys_hess = [:trunk_Hv_JuMP, :trunk_Hv_adnlpmodel, :trunk_Hv_SPS]
-keys_bfgs = [:LBFGS, :PBFGS, :PBFGS2, :PLBFGS]
+keys_solvers = [:LBFGS, :PBFGS, :PLBFGS, :PSR1, :PLSR1, :PSE, :PLSE]
 
 
 #= Lancement du benchmark sur les problèmes générés, sur les solvers défini dans la variable solvers =#
@@ -116,11 +119,11 @@ end
 
 #Construction de tables particulières pour chaque classe de solvers.
 
-stats_bfgs = Dict{Symbol,DataFrame}([])
-for i in keys_bfgs
-  stats_bfgs[i] = stats[i]
-end
-cost(df) = (df.status .!= :success) * Inf + df.t
+# stats_keys = Dict{Symbol,DataFrame}([])
+# for i in keys_solvers
+#   stats_keys[i] = stats[i]
+# end
+# cost(df) = (df.status .!= :success) * Inf + df.t
 
 println("affichage des tables")
 #selection des champs à affichier
@@ -132,7 +135,7 @@ end
 
 #= Ecriture des résultats dans un fichier au format markdown=#
 println("écriture des résultats markdown")
-location_md = string("src/comparaison/results/plbfgs/result_bench.md")
+location_md = string("src/comparaison/results/plse/result_bench.md")
 io = open(location_md,"w")
 close(io)
 io = open(location_md,"w+")
@@ -145,7 +148,7 @@ close(io)
 
 #= Ecriture des résultats dans un fichier au format latex=#
 println("écriture des résultats latex")
-location_latex = string("src/comparaison/results/plbfgs/result_bench_latex.tex")
+location_latex = string("src/comparaison/results/plse/result_bench_latex.tex")
 io = open(location_latex,"w")
 close(io)
 io = open(location_latex,"w+")
@@ -163,15 +166,15 @@ ENV["GKSwstype"]=100
 
 println("écriture de tous les profiles")
 p_iter = SolverBenchmark.performance_profile(stats, df -> (df.status .== :max_eval) * Inf + df.iter; legend=:bottomright )
-savefig(p_iter, "src/comparaison/results/plbfgs/profiles/iter_profile.pdf")
-p_time = SolverBenchmark.performance_profile(stats, df -> df.elapsed_time; legend=:bottomright )
-savefig(p_time, "src/comparaison/results/plbfgs/profiles/time_profile.pdf")
-p_fst_crit = SolverBenchmark.performance_profile(stats, df -> df.obj_5grad_5Hv; legend=:bottomright )
-savefig(p_fst_crit, "src/comparaison/results/plbfgs/profiles/obj_5grad_5Hv.pdf")
+savefig(p_iter, "src/comparaison/results/plse/profiles/iter_profile.pdf")
+p_time = SolverBenchmark.performance_profile(stats, df -> (df.status .== :max_eval) * Inf + df.elapsed_time; legend=:bottomright )
+savefig(p_time, "src/comparaison/results/plse/profiles/time_profile.pdf")
+p_fst_crit = SolverBenchmark.performance_profile(stats, df -> (df.status .== :max_eval) * Inf + df.obj_5grad_5Hv; legend=:bottomright )
+savefig(p_fst_crit, "src/comparaison/results/plse/profiles/obj_5grad_5Hv.pdf")
 # p_snd_crit = SolverBenchmark.performance_profile(stats, df -> df.time_sur_obj_5grad_5Hv; legend=:bottomright )
-# savefig(p_snd_crit, "src/comparaison/results/plbfgs/profiles/time_sur_obj_5grad_5Hv.pdf")
+# savefig(p_snd_crit, "src/comparaison/results/plse/profiles/time_sur_obj_5grad_5Hv.pdf")
 # p_thd_crit = SolverBenchmark.performance_profile(stats, df -> df.inverse_pourcentage_pas_accepte; legend=:bottomright )
-# savefig(p_thd_crit, "src/comparaison/results/plbfgs/profiles/inverse_pourcentage_pas_accepte.pdf")
+# savefig(p_thd_crit, "src/comparaison/results/plse/profiles/inverse_pourcentage_pas_accepte.pdf")
 
 
 println("Fin des écritures")
