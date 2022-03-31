@@ -14,10 +14,10 @@
 	@test ges_mnlp_plbfgs.status == :first_order
 	@test ges_adnlp_plbfgs.status == :first_order
 
-	@test isapprox(norm(ges_mnlp_pbfgs.solution - ones(n), 2), 0, atol=1e-4)
-	@test isapprox(norm(ges_adnlp_pbfgs.solution - ones(n), 2), 0, atol=1e-4)
-	@test isapprox(norm(ges_mnlp_plbfgs.solution - ones(n), 2), 0, atol=1e-4)
-	@test isapprox(norm(ges_adnlp_plbfgs.solution - ones(n), 2), 0, atol=1e-4)
+	@test isapprox(norm(ges_mnlp_pbfgs.solution - ones(n), 2), 0, atol=1e-2)
+	@test isapprox(norm(ges_adnlp_pbfgs.solution - ones(n), 2), 0, atol=1e-2)
+	@test isapprox(norm(ges_mnlp_plbfgs.solution - ones(n), 2), 0, atol=1e-2)
+	@test isapprox(norm(ges_adnlp_plbfgs.solution - ones(n), 2), 0, atol=1e-2)
 end 
 
 @testset "PBFGS-PLBFGS Rosenbrock" begin 
@@ -30,3 +30,24 @@ end
 	@test ges_pbfgs.status == :first_order
 	@test ges_plbfgs.status == :first_order	
 end 
+
+@testset "PUS Rosenbrock" begin
+
+	n = 10
+	nlp = MathOptNLPModel(OptimizationProblems.arwhead(n), name="arwhead " * string(n))	
+
+	ges_plbfgs = PUS(nlp; name=:plbfgs)
+	ges_plsr1 = PUS(nlp; name=:plsr1)
+	ges_plse = PUS(nlp; name=:plse)
+	ges_psr1 = PUS(nlp; name=:psr1)
+	ges_pse = PUS(nlp; name=:pse)
+	ges_pbfgs = PUS(nlp; name=:pbfgs)
+
+	@test ges_plbfgs.status == :first_order
+	@test ges_plsr1.status == :first_order
+	@test ges_plse.status == :first_order
+	@test ges_psr1.status == :first_order
+	@test ges_pse.status == :first_order
+	@test ges_pbfgs.status == :first_order
+
+end
