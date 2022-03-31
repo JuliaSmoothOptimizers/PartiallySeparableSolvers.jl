@@ -16,17 +16,17 @@ to the SR1 update method.
         ω = 1e-8
         @inbounds @fastmath v = y - B * Δx :: Vector{Y}
 
-        @fastmath cond_left = abs( Δx' * v )
+        @fastmath cond_left = abs( dot(Δx', v))
         @fastmath cond_right = ω * norm(Δx,2) * norm(v,2)
         @fastmath cond = (cond_left > cond_right) :: Bool
 
         if cond
             @fastmath num = Array{Y,2}( v * v')
-            @fastmath den = (v' * Δx) :: Y
+            @fastmath den = dot(v', Δx) :: Y
             @fastmath num_den = num/den
-            @fastmath @inbounds B_1[:] = (B + num_den) :: Array{Y,2}
+            @fastmath @inbounds B_1 .= (B .+ num_den) :: Array{Y,2}
         else
-            @inbounds B_1[:] = B :: Array{Y,2}
+            @inbounds B_1 .= B :: Array{Y,2}
         end
     end
 
@@ -48,17 +48,17 @@ to the BFGS update method.
                         B :: AbstractArray{Y,2}, #current approcimation of the Hessian
                         B_1 :: AbstractArray{Y,2}) where Y <: Number #Array that will store the next approximation of the Hessian
 
-        if (dot(Δx', y) > 0 )
-            @fastmath α = 1 / (y' * Δx)
-            @fastmath β = - (1 / (Δx' * B * Δx) )
+        if (dot(Δx, y) > 0 )
+            @fastmath α = 1 / dot(y, Δx)
+            @fastmath β = - (1 / dot(Δx, B * Δx) )
             @fastmath u = y
             @fastmath v = B * Δx
             @fastmath terme1 = (α * u * u')
             @fastmath terme2 = (β * v * v')
-            @fastmath @inbounds B_1[:] = (B + terme1 + terme2) :: Array{Y,2}
+            @fastmath @inbounds B_1 .= (B .+ terme1 .+ terme2) :: Array{Y,2}
 						return 1
         else
-            @inbounds B_1[:] = B :: Array{Y,2}
+            @inbounds B_1 .= B :: Array{Y,2}
 						return 0
         end
     end

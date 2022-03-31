@@ -369,7 +369,7 @@ function update_PBFGS!(s_a :: struct_algo{T,Y}, B :: LinearOperator{Y};
     if ρₖ > s_a.η #= on accepte le nouveau point =#
         s_a.index = other_index(s_a)
         s_a.tpl_f[Int(s_a.index)] = fxₖ₊₁
-        s_a.tpl_x[Int(s_a.index)] = s_a.tpl_x[Int(other_index(s_a))] + s_k
+        s_a.tpl_x[Int(s_a.index)] .= s_a.tpl_x[Int(other_index(s_a))] .+ s_k
 
         PartiallySeparableNLPModels.evaluate_SPS_gradient!(s_a.sps, s_a.tpl_x[Int(s_a.index)], s_a.tpl_g[Int(s_a.index)])
         PartiallySeparableNLPModels.build_gradient!(s_a.sps, s_a.tpl_g[Int(s_a.index)], s_a.grad)

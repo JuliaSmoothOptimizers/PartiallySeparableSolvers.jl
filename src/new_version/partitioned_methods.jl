@@ -5,7 +5,7 @@ module Mod_partitioned_methods
 	using ..Mod_TR_CG_part_data
 	
 	export get_expr_tree
-	export PBFGS2, PLBFGS
+	export PBFGS2, PLBFGS, PUS
 
 	function get_expr_tree(nlp :: MathOptNLPModel; x0 :: Vector{T}=copy(nlp.meta.x0), kwargs...) where T <: Number
 		model = nlp.eval.m
@@ -37,5 +37,13 @@ module Mod_partitioned_methods
 		part_data_plbfgs = build_PartitionedData_TR_PLBFGS(ex, n; x0=x0)
 		ges = generic_algorithm_wrapper(nlp, part_data_plbfgs; kwargs...)
 		return ges
-end 
+	end 
+
+	function PUS(nlp :: N; name=:plse, kwargs...) where N <: AbstractNLPModel
+		(ex, n, x0) = get_expr_tree(nlp)
+		part_data_pqn = build_PartitionedData_TR_PQN(ex, n; name=name, x0=x0)
+		ges = generic_algorithm_wrapper(nlp, part_data_pqn; kwargs...)
+		return ges
+	end 
+	
 end 

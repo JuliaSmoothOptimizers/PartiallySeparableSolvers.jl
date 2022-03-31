@@ -13,7 +13,7 @@ module PartiallySeparableSolvers
 		using ..Mod_partitioned_methods
 
     export PBFGS, PSR1, PBS, PTRUNK
-		export PBFGS2, PLBFGS
+		export PBFGS2, PLBFGS, PUS
     export my_LBFGS, my_LSR1
     export PartionnedNLPModel
 
