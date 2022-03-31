@@ -61,14 +61,14 @@ println(" \n\n génération des problemes")
 # problems = create_all_problems(n_array)
 current_path = pwd()
 include(current_path * "/benchmark/scripts/generate_problems.jl")
-n=10
+n=1000
 problems = create_JuMP_models(n) #MathOptNLPModel
 
 println("\n\ndéfinition des solver\n\n")
 const atol = 1.0e-5
 const rtol = 1.0e-6
 const max_time = 600.0
-const max_eval = 3000
+const max_eval = 5000
 
 
 solver = Dict{Symbol,Function}(

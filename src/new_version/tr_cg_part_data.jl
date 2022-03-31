@@ -138,7 +138,7 @@ module Mod_TR_CG_part_data
 	function compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::P, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}; cpt::Counter=Counter(0,0,0)) where {T <: Number, P <: PartiallySeparableNLPModels.PartitionedData}
 		mₖ₊₁ = fₖ + dot(gₖ,sₖ) + 1/2 * (dot((B*sₖ),sₖ))
 		fₖ₊₁ = evaluate_obj_part_data(part_data, x+sₖ) # the evaluation set partdata.x to x+sₖ
-		set_x!(part_data, x)
+		set_x!(part_data, x) # set x to its real value, mandatoy for the computation of y
 		increase_obj!(cpt)
 		ρₖ = (fₖ - fₖ₊₁)/(fₖ - mₖ₊₁)
 		return (ρₖ,fₖ₊₁)
