@@ -21,7 +21,8 @@ module Mod_TR_CG_part_data
 		start_time::Float64=time(),
 		max_time::Float64=30.0,
 		ϵ::Float64= 1e-6,
-		name::String="Undefined_TR_CG",
+		name = part_data.name,
+		name_method::String="Trust-region "*String(name),
 		kwargs...) where {N <: AbstractNLPModel, P <: PartiallySeparableNLPModels.PartitionedData}
 
 		x₀ = get_x(part_data)
@@ -30,7 +31,7 @@ module Mod_TR_CG_part_data
 		∇fNorm2 = norm(∇f₀,2)
 
 		cpt = Counter(0,0,0)
-		println("Start: "*name)
+		println("Start: "*name_method)
 		(x,iter) = TR_CG_PD(part_data; max_eval=max_eval, max_iter=max_iter, max_time=max_time, ∇f₀=∇f₀, cpt=cpt, kwargs...)
 
 		Δt = time() - start_time
@@ -83,6 +84,7 @@ module Mod_TR_CG_part_data
 		cpt::Counter=Counter(0,0,0),
 		iter_print::Int64=Int(floor(max_iter/100)),
 		T=eltype(x),
+		verbose=true,
 		kwargs...,
 		) where P <: PartiallySeparableNLPModels.PartitionedData
 
@@ -93,7 +95,7 @@ module Mod_TR_CG_part_data
 				
 		fₖ = evaluate_obj_part_data(part_data, x)
 		
-		@printf "iter temps fₖ norm(gₖ,2) Δ\n" 
+		verbose && (@printf "iter temps fₖ norm(gₖ,2) Δ\n" )
 
 		cgtol = one(T)  # Must be ≤ 1.
 		cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
@@ -107,7 +109,7 @@ module Mod_TR_CG_part_data
 		_max_iter(iter, max_iter) = iter < max_iter
 		_max_time(start_time) = (time() - start_time) < max_time
 		while absolute(n,gₖ,ϵ) && relative(n,gₖ,ϵ,∇fNorm2) && _max_iter(iter, max_iter) & _max_time(start_time)# stop condition
-			@printf "%3d %4g %8.1e %7.1e %7.1e \t " iter (time() - start_time) fₖ norm(gₖ,2) Δ
+			verbose && (@printf "%3d %4g %8.1e %7.1e %7.1e \t " iter (time() - start_time) fₖ norm(gₖ,2) Δ)
 			iter += 1			
 			cg_res = Krylov.cg(B, - gₖ, atol=T(atol), rtol=cgtol, radius = T(Δ), itmax=max(2*n,50))
 			sₖ .= cg_res[1]  # result of the linear system solved by Krylov.cg
@@ -116,22 +118,24 @@ module Mod_TR_CG_part_data
 
 			if ρₖ > η
 				x .= x .+ sₖ
-				fₖ = fₖ₊₁				
-				PartiallySeparableNLPModels.update_nlp!(part_data, sₖ; name=part_data.name)
-				# PartiallySeparableNLPModels.update_nlp!(part_data, x, sₖ; name=part_data.name)
+				fₖ = fₖ₊₁
+				gtmp = copy(gₖ)
+				PartiallySeparableNLPModels.update_nlp!(part_data, sₖ; name=part_data.name, verbose=verbose)
 				gₖ .= PartitionedStructures.get_v(get_pg(part_data))
-				increase_grad!(cpt)
-				@printf "✅\n"
+				build_v!(get_pg(part_data))
+				y = gₖ - gtmp
+				increase_grad!(cpt)				
+				verbose && (@printf  "sTy : %8.1e, ||s|| : %8.1e, ||y|| : %8.1e, Bs-y = %8.1e\n" dot(y,sₖ) norm(sₖ,2) norm(y,2) norm(B*sₖ-y,2))
+				verbose && (@printf "✅\n")
 			else
 				fₖ = fₖ
-				@printf "❌\n"
+				verbose && (@printf "❌\n")
 			end
 			# trust region update
 			(ρₖ >= η₁ && norm(sₖ, 2) >= 0.8*Δ) ? Δ = ϕ*Δ : Δ = Δ
 			(ρₖ <= η) && (Δ = 1/ϕ*Δ)			
 		end
-		@printf "%3d %4g %8.1e %7.1e %7.1e \n" iter (time() - start_time) fₖ norm(gₖ,2) Δ
-		# println(Matrix(part_data.pB))
+		verbose && (@printf "%3d %4g %8.1e %7.1e %7.1e \n" iter (time() - start_time) fₖ norm(gₖ,2) Δ)
 		return (x, iter)
 	end
 

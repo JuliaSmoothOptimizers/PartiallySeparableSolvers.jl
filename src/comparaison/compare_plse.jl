@@ -61,7 +61,7 @@ println(" \n\n génération des problemes")
 # problems = create_all_problems(n_array)
 current_path = pwd()
 include(current_path * "/benchmark/scripts/generate_problems.jl")
-n=1000
+n=10000
 problems = create_JuMP_models(n) #MathOptNLPModel
 
 println("\n\ndéfinition des solver\n\n")
@@ -72,12 +72,12 @@ const max_eval = 5000
 
 
 solver = Dict{Symbol,Function}(
-:PBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:pbfgs, kwargs...)),
-:PLBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plbfgs, kwargs...)),
-:PSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:psr1, kwargs...)),
-:PLSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plsr1, kwargs...)),
-:PSE => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:pse, kwargs...)),
-:PLSE => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plse, kwargs...)),
+:PBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:pbfgs, verbose=false, kwargs...)),
+:PLBFGS => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plbfgs, verbose=false, kwargs...)),
+:PSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:psr1, verbose=false, kwargs...)),
+:PLSR1 => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plsr1, verbose=false, kwargs...)),
+:PSE => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:pse, verbose=false, kwargs...)),
+:PLSE => ((prob;kwargs...) -> PartiallySeparableSolvers.PUS(prob; name=:plse, verbose=false, kwargs...)),
 )
 
 solver2 = Dict{Symbol,Function}(
