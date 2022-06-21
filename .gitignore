@@ -38,3 +38,5 @@ benchmark/archive/**
 test/dvpt_folder/**
 
 todo.md
+
+src/comparaison/**
