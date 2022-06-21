@@ -16,6 +16,5 @@ makedocs(
 
 deploydocs(repo = "github.com/paraynaud/PartiallySeparableSolvers.jl.git", devbranch = "master")
 
-
 # using DocumenterTools
 # DocumenterTools.genkeys(user="paraynaud", repo="PartiallySeparableSolvers.jl")
