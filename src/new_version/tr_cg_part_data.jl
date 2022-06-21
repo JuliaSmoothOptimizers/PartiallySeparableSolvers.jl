@@ -31,7 +31,7 @@ module Mod_TR_CG_part_data
 		∇fNorm2 = norm(∇f₀,2)
 
 		cpt = Counter(0,0,0)
-		println("Start: "*name_method)
+		println("Start: " * name_method)
 		(x,iter) = TR_CG_PD(part_data; max_eval=max_eval, max_iter=max_iter, max_time=max_time, ∇f₀=∇f₀, cpt=cpt, kwargs...)
 
 		Δt = time() - start_time
@@ -90,6 +90,7 @@ module Mod_TR_CG_part_data
 
 		iter = 0 # ≈ k
 		gₖ = copy(∇f₀)
+		gtmp = similar(gₖ)
 		∇fNorm2 = norm(∇f₀, 2)
 		sₖ = similar(x)
 				
@@ -119,13 +120,13 @@ module Mod_TR_CG_part_data
 			if ρₖ > η
 				x .= x .+ sₖ
 				fₖ = fₖ₊₁
-				gtmp = copy(gₖ)
+				gtmp .= gₖ
 				PartiallySeparableNLPModels.update_nlp!(part_data, sₖ; name=part_data.name, verbose=verbose)
 				gₖ .= PartitionedStructures.get_v(get_pg(part_data))
 				build_v!(get_pg(part_data))
-				y = gₖ - gtmp
+				# y .= gₖ .- gtmp
 				increase_grad!(cpt)				
-				verbose && (@printf  "sTy : %8.1e, ||s|| : %8.1e, ||y|| : %8.1e, Bs-y = %8.1e\n" dot(y,sₖ) norm(sₖ,2) norm(y,2) norm(B*sₖ-y,2))
+				# verbose && (@printf  "sTy : %8.1e, ||s|| : %8.1e, ||y|| : %8.1e, Bs-y = %8.1e\n" dot(y,sₖ) norm(sₖ,2) norm(y,2) norm(B*sₖ-y,2))
 				verbose && (@printf "✅\n")
 			else
 				fₖ = fₖ

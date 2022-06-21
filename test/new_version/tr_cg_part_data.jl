@@ -37,6 +37,7 @@ end
 	nlp = MathOptNLPModel(OptimizationProblems.arwhead(n), name="arwhead " * string(n))	
 
 	ges_plbfgs = PUS(nlp; name=:plbfgs)
+	ges_plbfgs_damped = PUS(nlp; name=:plbfgs, damped=true)
 	ges_plsr1 = PUS(nlp; name=:plsr1)
 	ges_plse = PUS(nlp; name=:plse)
 	ges_psr1 = PUS(nlp; name=:psr1)
@@ -44,6 +45,7 @@ end
 	ges_pbfgs = PUS(nlp; name=:pbfgs)
 
 	@test ges_plbfgs.status == :first_order
+	@test ges_plbfgs_damped.status == :first_order	
 	@test ges_plsr1.status == :first_order
 	@test ges_plse.status == :first_order
 	@test ges_psr1.status == :first_order
