@@ -4,8 +4,6 @@ using NLPModels, NLPModelsJuMP
 
 using PartiallySeparableSolvers
 
-
-
 include("generate_problems.jl")
 
 const SUITE = BenchmarkGroup()
@@ -16,10 +14,9 @@ SUITE["sps"] = BenchmarkGroup()
 problem_collection = create_problems()
 global cpt = 1
 for (mod, mod_AD) in problem_collection
-  println("grad : itération " * string(cpt) *  "/41")
+  println("grad : itération " * string(cpt) * "/41")
 
   n = mod.moi_backend.model_cache.model.num_variables_created
-
 
   #= Définition des nlp modèles que nous allons comparer =#
   jump_nlp = NLPModelsJuMP.MathOptNLPModel(mod)
@@ -28,7 +25,6 @@ for (mod, mod_AD) in problem_collection
   #= Définition des points que nous allons tester=#
   x = sps_nlp.meta.x0
   v = ones(eltype(x), length(x))
-
 
   grad_sps = similar(x)
   grad_jump = similar(x)
@@ -45,7 +41,6 @@ for (mod, mod_AD) in problem_collection
   SUITE["jump"]["problem $cpt"] = @benchmarkable NLPModels.grad!($jump_nlp, $x, $grad_jump)
   println("\t AD")
   SUITE["ad"]["problem $cpt"] = @benchmarkable NLPModels.grad!($mod_AD, $x, $grad_ad)
-
 
   global cpt += 1
 end

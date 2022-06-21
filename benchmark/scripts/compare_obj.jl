@@ -1,7 +1,6 @@
 using BenchmarkTools
 using NLPModels, NLPModelsJuMP
 
-
 using PartiallySeparableSolvers
 
 include("generate_problems.jl")
@@ -14,10 +13,9 @@ SUITE["sps"] = BenchmarkGroup()
 problem_collection = create_problems()
 global cpt = 1
 for (mod, mod_AD) in problem_collection
-  println("obj : itération " * string(cpt) *  "/41")
+  println("obj : itération " * string(cpt) * "/41")
 
   n = mod.moi_backend.model_cache.model.num_variables_created
-
 
   #= Définition des nlp modèles que nous allons comparer =#
   println("\t Model JuMP")
@@ -28,7 +26,6 @@ for (mod, mod_AD) in problem_collection
   #= Définition des points que nous allons tester=#
   x = sps_nlp.meta.x0
   v = ones(eltype(x), length(x))
-
 
   SUITE["jump"]["problem $cpt"] = BenchmarkGroup()
   SUITE["ad"]["problem $cpt"] = BenchmarkGroup()
@@ -41,7 +38,6 @@ for (mod, mod_AD) in problem_collection
   SUITE["jump"]["problem $cpt"] = @benchmarkable NLPModels.obj($jump_nlp, $x)
   println("\t AD")
   SUITE["ad"]["problem $cpt"] = @benchmarkable NLPModels.obj($mod_AD, $x)
-
 
   global cpt += 1
 end

@@ -4,7 +4,6 @@ using NLPModels, NLPModelsJuMP
 
 using PartiallySeparableSolvers
 
-
 include("generate_problems.jl")
 
 const SUITE = BenchmarkGroup()
@@ -15,7 +14,7 @@ SUITE["sps"] = BenchmarkGroup()
 problem_collection = create_problems()
 global cpt = 1
 for (mod, mod_AD) in problem_collection
-  println("Hv : itération " * string(cpt) *  "/41")
+  println("Hv : itération " * string(cpt) * "/41")
 
   n = mod.moi_backend.model_cache.model.num_variables_created
 
@@ -37,11 +36,14 @@ for (mod, mod_AD) in problem_collection
 
   #calcul de la fonction objectif
   println("\t sps")
-  SUITE["sps"]["problem $cpt"] = @benchmarkable NLPModels.hprod!($sps_nlp, $x, $v, $hv_sps; obj_weight=1.0)
+  SUITE["sps"]["problem $cpt"] =
+    @benchmarkable NLPModels.hprod!($sps_nlp, $x, $v, $hv_sps; obj_weight = 1.0)
   println("\t JuMP")
-  SUITE["jump"]["problem $cpt"] = @benchmarkable NLPModels.hprod!($jump_nlp, $x, $v, $hv_jump; obj_weight=1.0)
+  SUITE["jump"]["problem $cpt"] =
+    @benchmarkable NLPModels.hprod!($jump_nlp, $x, $v, $hv_jump; obj_weight = 1.0)
   println("\t AD")
-  SUITE["ad"]["problem $cpt"] = @benchmarkable NLPModels.hprod!($mod_AD, $x, $v, $hv_ad; obj_weight=1.0)
+  SUITE["ad"]["problem $cpt"] =
+    @benchmarkable NLPModels.hprod!($mod_AD, $x, $v, $hv_ad; obj_weight = 1.0)
 
   global cpt += 1
 end

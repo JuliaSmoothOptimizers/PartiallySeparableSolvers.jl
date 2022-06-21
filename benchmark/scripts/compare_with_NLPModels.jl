@@ -13,7 +13,6 @@ global cpt = 1
 for (mod, mod_AD) in problem_collection
   n = mod.moi_backend.model_cache.model.num_variables_created
 
-
   #= Définition des nlp modèles que nous allons comparer =#
   jump_nlp = NLPModelsJuMP.MathOptNLPModel(mod)
   sps_nlp = PartiallySeparableSolvers.PartionnedNLPModel(jump_nlp)
@@ -42,13 +41,15 @@ for (mod, mod_AD) in problem_collection
   SUITE["problem $cpt"]["grad"]["jump"] = @benchmarkable NLPModels.grad!($jump_nlp, $x, $grad_jump)
   SUITE["problem $cpt"]["grad"]["ad"] = @benchmarkable NLPModels.grad!($mod_AD, $x, $grad_AD)
 
-
   hv_jump = similar(x)
   hv_sps = similar(x)
   hv_AD = similar(x)
-  SUITE["problem $cpt"]["Hv"]["sps"] = @benchmarkable NLPModels.hprod!($sps_nlp, $x, $v, $hv_sps; obj_weight=1.0)
-  SUITE["problem $cpt"]["Hv"]["jump"] = @benchmarkable NLPModels.hprod!($jump_nlp, $x, $v, $hv_jump; obj_weight=1.0)
-  SUITE["problem $cpt"]["Hv"]["ad"] = @benchmarkable NLPModels.hprod!($mod_AD, $x, $v, $hv_AD; obj_weight=1.0)
+  SUITE["problem $cpt"]["Hv"]["sps"] =
+    @benchmarkable NLPModels.hprod!($sps_nlp, $x, $v, $hv_sps; obj_weight = 1.0)
+  SUITE["problem $cpt"]["Hv"]["jump"] =
+    @benchmarkable NLPModels.hprod!($jump_nlp, $x, $v, $hv_jump; obj_weight = 1.0)
+  SUITE["problem $cpt"]["Hv"]["ad"] =
+    @benchmarkable NLPModels.hprod!($mod_AD, $x, $v, $hv_AD; obj_weight = 1.0)
 
   global cpt += 1
 end
