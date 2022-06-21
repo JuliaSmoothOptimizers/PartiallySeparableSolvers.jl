@@ -45,7 +45,7 @@ Contrary to the BFGS and SR1 updates, a partitioned quasi-Newton approximation k
 
 
 ## Content
-The module take [ADNLPModel](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl), which is definedby julia pure code, as model to minimize.
+The module take an [ADNLPModel](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl), which is defined by julia pure code, as a model to be minimized.
 
 Here is a quick example explaining how to use PartiallySeparableSolvers.jl
 ```julia
@@ -58,7 +58,7 @@ function example(x)
 	return sum( sum( x[j] for j=1:i)^2 for i=2:n)
 end 
 start_example(n :: Int) = ones(n)
-example_ADNLPModel(n :: Int=100) = ADNLPModel(example, start_example(n), name="Example "*string(n) * " variables")
+example_ADNLPModel(n :: Int=100) = ADNLPModel(example, start_example(n), name="Example " * string(n) * " variables")
 
 n = 50 # size of the problem
 example_nlp_model = example_ADNLPModel(n) # example model of size n
@@ -71,15 +71,15 @@ PUS(example_nlp_model; name=:plbfgs)
 The partitioned quasi-Newton operator use in the method is specified by :
 - `name=:pbfgs` # each $\hat{B}_i$ is update by BFGS
 - `name=:psr1` # each $\hat{B}_i$ is update by SR1
-- `name=:pse` # $\hat{B}_i$ may be update by both BFGS and SR1
+- `name=:pse` # $\hat{B}_i$ may be updated by both BFGS and SR1
 - `name=:plbfgs` # each $\hat{B}_i$ is LBFGS operator
 - `name=:plsr1` # each $\hat{B}_i$ is LSR1 operator
-- `name=:plse` # each $\hat{B}_i$ may be LBFGS or LSR1 operator
+- `name=:plse` # each $\hat{B}_i$ may be a LBFGS or LSR1 operator
 
 ## Dependencies
 The module [CalculusTreeTools.jl](https://github.com/paraynaud/CalculusTreeTools.jl) detects automatically the partially separable structure of $f$.
 The partitioned quasi-Newton approximation are defined in the module [PartitionedStructures.jl](https://github.com/paraynaud/PartitionedStructures.jl).
-All the structures required by the trust-region methods are managed by [PartiallySeparableNLPModels.jl](https://github.com/paraynaud/PartiallySeparableNLPModels.jl).
+All the structures required by the trust-region method are managed by [PartiallySeparableNLPModels.jl](https://github.com/paraynaud/PartiallySeparableNLPModels.jl).
 
 
 ## How to install
