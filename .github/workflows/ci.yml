@@ -49,10 +49,9 @@ jobs:
       - name: Installing non-registered dependencies
         run: |
           using Pkg
-          pkg1 = PackageSpec(url = "https://github.com/paraynaud/CalculusTreeTools.jl.git")
+          pkg1 = PackageSpec(url = "https://github.com/paraynaud/ExpressionTreeForge.jl.git")
           pkg2 = PackageSpec(url = "https://github.com/paraynaud/PartiallySeparableNLPModels.jl.git")
-          pkg3 = PackageSpec(url = "https://github.com/paraynaud/PartitionedStructures.jl.git")
-          pkg_list = [pkg1, pkg2, pkg3]
+          pkg_list = [pkg1, pkg2]
           Pkg.add(pkg_list)
         shell: julia --project="@." --color=yes {0}
       - uses: julia-actions/julia-buildpkg@v1
