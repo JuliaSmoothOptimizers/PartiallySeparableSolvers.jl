@@ -35,8 +35,6 @@ benchmark/profiles/**
 benchmark/profiles/archive/**
 benchmark/archive/**
 
-test/dvpt_folder/**
-
-todo.md
+dvpt/**
 
 src/comparaison/**
