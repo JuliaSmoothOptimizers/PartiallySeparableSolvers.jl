@@ -1,6 +1,6 @@
 module Mod_TR_CG_part_data
 
-using CalculusTreeTools, PartitionedStructures, PartiallySeparableNLPModels
+using ExpressionTreeForge, PartitionedStructures, PartiallySeparableNLPModels
 using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
 using Printf, SolverCore, SolverTools
 
@@ -156,9 +156,7 @@ function TR_CG_PD(
       )
       gₖ .= PartitionedStructures.get_v(get_pg(part_data))
       build_v!(get_pg(part_data))
-      # y .= gₖ .- gtmp
       increase_grad!(cpt)
-      # verbose && (@printf  "sTy : %8.1e, ||s|| : %8.1e, ||y|| : %8.1e, Bs-y = %8.1e\n" dot(y,sₖ) norm(sₖ,2) norm(y,2) norm(B*sₖ-y,2))
       verbose && (@printf "✅\n")
     else
       fₖ = fₖ

@@ -77,7 +77,7 @@ The partitioned quasi-Newton operator use in the method is specified by :
 - `name=:plse` # each $\hat{B}_i$ may be a LBFGS or LSR1 operator
 
 ## Dependencies
-The module [CalculusTreeTools.jl](https://github.com/paraynaud/CalculusTreeTools.jl) detects automatically the partially separable structure of $f$.
+The module [ExpressionTreeForge.jl](https://github.com/paraynaud/ExpressionTreeForge.jl) detects automatically the partially separable structure of $f$.
 The partitioned quasi-Newton approximation are defined in the module [PartitionedStructures.jl](https://github.com/paraynaud/PartitionedStructures.jl).
 All the structures required by the trust-region method are managed by [PartiallySeparableNLPModels.jl](https://github.com/paraynaud/PartiallySeparableNLPModels.jl).
 
@@ -85,6 +85,6 @@ All the structures required by the trust-region method are managed by [Partially
 ## How to install
 ```
 julia> ]
-pkg> add https://github.com/paraynaud/PartitionedStructures.jl, https://github.com/paraynaud/CalculusTreeTools.jl, https://github.com/paraynaud/PartiallySeparableNLPModels.jl, https://github.com/paraynaud/PartiallySeparableSolvers.jl
+pkg> add https://github.com/paraynaud/PartitionedStructures.jl, https://github.com/paraynaud/ExpressionTreeForge.jl, https://github.com/paraynaud/PartiallySeparableNLPModels.jl, https://github.com/paraynaud/PartiallySeparableSolvers.jl
 pkg> test PartiallySeparableSolvers
 ```
