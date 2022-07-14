@@ -17,7 +17,7 @@ makedocs(
   pages = Any["Home" => "index.md", "Tutorial" => "tutorial.md", "Reference" => "reference.md"],
 )
 
-deploydocs(repo = "github.com/paraynaud/PartiallySeparableSolvers.jl.git", devbranch = "master")
-
-# using DocumenterTools
-# DocumenterTools.genkeys(user="paraynaud", repo="PartiallySeparableSolvers.jl")
+deploydocs(repo = "github.com/paraynaud/PartiallySeparableSolvers.jl.git",
+  push_preview = true,
+  devbranch = "master"
+)
