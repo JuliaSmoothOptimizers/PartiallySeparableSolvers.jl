@@ -1,11 +1,14 @@
 using Documenter
 using PartiallySeparableSolvers
 
+using PartiallySeparableSolvers.Mod_partitioned_methods,
+  PartiallySeparableSolvers.Mod_TR_CG_part_data
+  
 makedocs(
-  modules = [PartiallySeparableSolvers],
+  modules = [PartiallySeparableSolvers, Mod_partitioned_methods, Mod_TR_CG_part_data],
   doctest = true,
   # linkcheck = true,
-  strict = true,
+  strict = false,
   format = Documenter.HTML(
     assets = ["assets/style.css"],
     prettyurls = get(ENV, "CI", nothing) == "true",
