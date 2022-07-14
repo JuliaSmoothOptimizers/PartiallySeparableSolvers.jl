@@ -54,8 +54,8 @@ using PartiallySeparableSolvers, ADNLPModels
 
 function example(x)
   n = length(x)
-	n < 2 && @error("length of x must be >= 2")
-	return sum( sum( x[j] for j=1:i)^2 for i=2:n)
+  n < 2 && @error("length of x must be >= 2")
+  return sum( sum( x[j] for j=1:i)^2 for i=2:n)
 end 
 start_example(n :: Int) = ones(n)
 example_ADNLPModel(n :: Int=100) = ADNLPModel(example, start_example(n), name="Example " * string(n) * " variables")
