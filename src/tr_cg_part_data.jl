@@ -2,7 +2,7 @@ module Mod_TR_CG_part_data
 
 using ExpressionTreeForge, PartitionedStructures, PartiallySeparableNLPModels
 using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
-using Printf, SolverCore, SolverTools
+using Printf, SolverCore
 
 export generic_algorithm_wrapper
 
@@ -26,9 +26,10 @@ increase_grad!(c::Counter) = c.neval_grad += 1
 increase_Hv(c::Counter) = c.neval_Hprod += 1
 
 """
-    ges = generic_algorithm_wrapper( nlp::N, part_data::P; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs..., ) where {N <: AbstractNLPModel, P <: PartiallySeparableNLPModels.PartitionedData}
+    ges = generic_algorithm_wrapper(nlp::AbstractNLPModel, part_data::PartiallySeparableNLPModels.PartitionedData; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs...)
 
 Produce a `GenericExecutionStats` for a partitioned quasi-Newton method `applied` on an `nlp` model paired a `part_data::PartitionedDate`.
+Update `nlp.counters` with the informations of `Mod_TR_CG_part_data.Counter`
 """
 function generic_algorithm_wrapper(
   nlp::AbstractNLPModel,
@@ -98,8 +99,14 @@ function generic_algorithm_wrapper(
   return ges
 end
 
+"""
+    (x, iter) = TR_CG_PD(part_data::PartiallySeparableNLPModels.PartitionedData; x::AbstractVector = copy(get_x(part_data)), n::Int = get_n(part_data), max_eval::Int = 10000, max_iter::Int = 10000, max_time::Float64 = 30.0, atol::Real = √eps(eltype(x)), rtol::Real = √eps(eltype(x)), start_time::Float64 = time(), η::Float64 = 1e-3, η₁::Float64 = 0.75, # > η Δ::Float64 = 1.0, ϵ::Float64 = 1e-6, ϕ::Float64 = 2.0, ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x), cpt::Counter = Counter(0, 0, 0), iter_print::Int64 = Int(floor(max_iter / 100)), T = eltype(x), verbose = true, kwargs...)
+
+Partitioned quasi-Newton method trust-reigon applied on `part_data`.
+It return the the point `x`, the current point satisfying stopping criteria, and how many `iter`ations it took to reach `x`.
+"""
 function TR_CG_PD(
-  part_data::P;
+  part_data::PartiallySeparableNLPModels.PartitionedData;
   x::AbstractVector = copy(get_x(part_data)),
   n::Int = get_n(part_data),
   max_eval::Int = 10000,
@@ -112,7 +119,6 @@ function TR_CG_PD(
   η₁::Float64 = 0.75, # > η
   Δ::Float64 = 1.0,
   ϵ::Float64 = 1e-6,
-  δ::Float64 = 1.0,
   ϕ::Float64 = 2.0,
   ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x),
   cpt::Counter = Counter(0, 0, 0),
@@ -120,7 +126,7 @@ function TR_CG_PD(
   T = eltype(x),
   verbose = true,
   kwargs...,
-) where {P <: PartiallySeparableNLPModels.PartitionedData}
+)
   iter = 0 # ≈ k
   gₖ = copy(∇f₀)
   gtmp = similar(gₖ)
@@ -185,15 +191,21 @@ function TR_CG_PD(
   return (x, iter)
 end
 
+"""
+    ρₖ = compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::PartiallySeparableNLPModels.PartitionedData, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}; cpt::Counter = Counter(0, 0, 0))
+
+Compute the ratio between the actual loss and the expected loss using `part_data`, the current point `x` and the step `s`.
+`g_k` must be the gradient at `x` and `B` the linear-operator paired to `part_data`.
+"""
 function compute_ratio(
   x::AbstractVector{T},
   fₖ::T,
   sₖ::Vector{T},
-  part_data::P,
+  part_data::PartiallySeparableNLPModels.PartitionedData,
   B::AbstractLinearOperator{T},
   gₖ::AbstractVector{T};
   cpt::Counter = Counter(0, 0, 0),
-) where {T <: Number, P <: PartiallySeparableNLPModels.PartitionedData}
+) where {T<:Number}
   mₖ₊₁ = fₖ + dot(gₖ, sₖ) + 1 / 2 * (dot((B * sₖ), sₖ))
   fₖ₊₁ = evaluate_obj_part_data(part_data, x + sₖ) # the evaluation set partdata.x to x+sₖ
   set_x!(part_data, x) # set x to its real value, mandatoy for the computation of y

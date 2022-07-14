@@ -1,7 +1,3 @@
-using ADNLPModels
-using OptimizationProblems, OptimizationProblems.ADNLPProblems
-using PartiallySeparableSolvers.Mod_partitioned_methods
-
 @testset "element function decomposition" begin
   n = 10
   

@@ -1,5 +1,3 @@
-using PartiallySeparableSolvers.Mod_partitioned_methods
-
 @testset "instantiation new version" begin
   n = 10
   ros_mnlp = create_Rosenbrock_MathOptModel(n)
@@ -23,10 +21,6 @@ using PartiallySeparableSolvers.Mod_partitioned_methods
     @test x0_ == x0
   end
 
-  # n = ros_adnlp.meta.nvar
-  # ModelingToolkit.@variables x[1:n]
-  # fun = ros_adnlp.f(x)
-  # ex = ExpressionTreeForge.transform_to_expr_tree(fun)
   @testset "ADNLPModel" begin
     ex_, n_, x0_ = get_expr_tree(ros_adnlp)
     @test ex_ == ex_ad

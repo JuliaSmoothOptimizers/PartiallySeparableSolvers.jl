@@ -1,10 +1,13 @@
 using PartiallySeparableSolvers
 
-using Test, LinearAlgebra, SparseArrays
+using Test, LinearAlgebra
 using ExpressionTreeForge, PartiallySeparableNLPModels, PartitionedStructures
 using JuMP, MathOptInterface
 using ADNLPModels, NLPModels, NLPModelsJuMP
-using JSOSolvers, ModelingToolkit
+using OptimizationProblems, OptimizationProblems.ADNLPProblems
+using ModelingToolkit
+
+using PartiallySeparableSolvers.Mod_partitioned_methods
 
 include("models.jl")
 include("pss.jl")

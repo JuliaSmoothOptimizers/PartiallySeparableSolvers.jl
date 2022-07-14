@@ -1,6 +1,5 @@
 using LinearOperators, LinearAlgebra, Krylov, NLPModels
 using Printf
-using SolverTools
 
 function compute_ratio(
   x::AbstractVector{Y},
@@ -12,9 +11,9 @@ function compute_ratio(
 ) where {Y <: Number}
   quad_model_s = f_x + dot(g, s) + 1 / 2 * dot((B * s), s)::Y
   f_next_x = NLPModels.obj(nlp, x + s)::Y
-  actual_decrease = f_x - f_next_x::Y
-  expected_decrease = f_x - quad_model_s::Y
-  return (actual_decrease / expected_decrease, f_next_x)::Tuple{Y, Y}
+  actual_loss = f_x - f_next_x::Y
+  expected_loss = f_x - quad_model_s::Y
+  return (actual_loss / expected_loss, f_next_x)::Tuple{Y, Y}
 end
 
 """
@@ -82,7 +81,7 @@ function solver_TR_CG_Ab_NLP_LO(
   yk = similar(g)
   NLPModels.grad!(nlp, x, ∇f₀)
   g .= ∇f₀
-  ∇f₀Norm2 = nrm2(n, ∇f₀)
+  ∇f₀Norm2 = norm(∇f₀, 2)
 
   f_xk = NLPModels.obj(nlp, x)
   verbose && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk ∇f₀Norm2 Δ)
