@@ -17,19 +17,19 @@ function compute_ratio(
 end
 
 """
-    Δ = upgrade_TR_LO(ρₖ, xₖ , sₖ, gₖ, Bₖ, nlp, Δ)
+    Δ = upgrade_TR_LO(pk::Float64, x_k::AbstractVector{T}, s_k::AbstractVector{T}, g_k::AbstractVector{T},  y_k::AbstractVector{T},  B_k::AbstractLinearOperator{T}, nlp::AbstractNLPModel, Δ::Float64; η::Float64 = 1e-3, η1::Float64 = 0.75 ) where {T <: Number}  
 
-Update the linear-operator `Bₖ` and return the trust-region radius `Δ` ratio depending `ρₖ` computed beforehand from the step `sₖ`.
+Update the linear-operator `Bₖ` and return the trust-region radius `Δ` depending `ρₖ` the ratio computed beforehand from the step `sₖ`.
 """
 function upgrade_TR_LO!(
-  pk::Float64, # value of the ratio
-  x_k::AbstractVector{T}, # actual point
-  s_k::AbstractVector{T}, # point found at the iteration k
+  pk::Float64,
+  x_k::AbstractVector{T},
+  s_k::AbstractVector{T},
   g_k::AbstractVector{T}, 
   y_k::AbstractVector{T}, 
-  B_k::AbstractLinearOperator{T}, # quasi-Newton opertor
+  B_k::AbstractLinearOperator{T},
   nlp::AbstractNLPModel,
-  Δ::Float64; # radius
+  Δ::Float64;
   η::Float64 = 1e-3,
   η1::Float64 = 0.75
 ) where {T <: Number}  
@@ -56,8 +56,8 @@ end
 """
     (x, iter) = solver_TR_CG_Ab_NLP_LO(nlp::AbstractNLPModel, B::AbstractLinearOperator{T}; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0,)
 
-A limited-memory quasi-Newton trust-region solver where the subproblems, whose quadratics terms are updated through the linear-operator `B`, are solved with a conjugate-gradient method (see [](https://github.com/JuliaSmoothOptimizers/Krylov.jl)).
-The method return the point `x` and the number of iterations performed before it reaches the stopping condition.
+A limited-memory quasi-Newton trust-region solver where the subproblems, whose quadratics terms are updated through the linear-operator `B`, are solved with a conjugate-gradient method (see [Krylov.jl](https://github.com/JuliaSmoothOptimizers/Krylov.jl)).
+The method return the point `x` and the number of `iter`ations performed before it reaches the stopping criterias.
 """
 function solver_TR_CG_Ab_NLP_LO(
   nlp::AbstractNLPModel,
