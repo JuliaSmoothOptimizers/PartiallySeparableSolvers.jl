@@ -6,6 +6,16 @@ using Printf, SolverCore, SolverTools
 
 export generic_algorithm_wrapper
 
+"""
+    Counter
+
+Substitute to `NLPModels.Counters` since the partitioned methods don't relie (for now) to `PartiallySeparableNLPModel`.
+It has fields:
+
+* `neval_obj::Int`: count the objective evaluations;
+* `neval_grad::Int`: count the objective gradient;
+* `neval_Hprod::Int`: count the objective Hessian-approximation-vector products.
+"""
 mutable struct Counter
   neval_obj::Int
   neval_grad::Int
@@ -15,9 +25,14 @@ increase_obj!(c::Counter) = c.neval_obj += 1
 increase_grad!(c::Counter) = c.neval_grad += 1
 increase_Hv(c::Counter) = c.neval_Hprod += 1
 
+"""
+    ges = generic_algorithm_wrapper( nlp::N, part_data::P; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs..., ) where {N <: AbstractNLPModel, P <: PartiallySeparableNLPModels.PartitionedData}
+
+Produce a `GenericExecutionStats` for a partitioned quasi-Newton method `applied` on an `nlp` model paired a `part_data::PartitionedDate`.
+"""
 function generic_algorithm_wrapper(
-  nlp::N,
-  part_data::P;
+  nlp::AbstractNLPModel,
+  part_data::PartiallySeparableNLPModels.PartitionedData;
   max_eval::Int = 10000,
   max_iter::Int = 10000,
   start_time::Float64 = time(),
@@ -26,7 +41,7 @@ function generic_algorithm_wrapper(
   name = part_data.name,
   name_method::String = "Trust-region " * String(name),
   kwargs...,
-) where {N <: AbstractNLPModel, P <: PartiallySeparableNLPModels.PartitionedData}
+)
   x₀ = get_x(part_data)
   n = get_n(part_data)
   ∇f₀ = evaluate_grad_part_data(part_data, x₀)
