@@ -17,9 +17,9 @@ function compute_ratio(
 end
 
 """
-    upgrade_TR_LO(ρₖ, xₖ , sₖ, gₖ, Bₖ, nlp, Δ)
+    Δ = upgrade_TR_LO(ρₖ, xₖ , sₖ, gₖ, Bₖ, nlp, Δ)
 
-Update the linear operator `Bₖ` and the trust-region radius Δ ratio depending `ρₖ` computed beforhand from the step `sₖ`.
+Update the linear-operator `Bₖ` and return the trust-region radius `Δ` ratio depending `ρₖ` computed beforehand from the step `sₖ`.
 """
 function upgrade_TR_LO!(
   pk::Float64, # value of the ratio
@@ -54,10 +54,10 @@ function upgrade_TR_LO!(
 end
 
 """
-    solver_TR_CG_Ab_NLP_LO(nlp, B, x0)
+    (x, iter) = solver_TR_CG_Ab_NLP_LO(nlp::AbstractNLPModel, B::AbstractLinearOperator{T}; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0,)
 
-A quasi-Newton trust-region solver with conjugate gradient where `B` a limited-memory Hessian approximation.
-The method return the final point and the number of iteration performed before it reaches the stopping condition.
+A limited-memory quasi-Newton trust-region solver where the subproblems, whose quadratics terms are updated through the linear-operator `B`, are solved with a conjugate-gradient method (see [](https://github.com/JuliaSmoothOptimizers/Krylov.jl)).
+The method return the point `x` and the number of iterations performed before it reaches the stopping condition.
 """
 function solver_TR_CG_Ab_NLP_LO(
   nlp::AbstractNLPModel,
@@ -117,9 +117,9 @@ function solver_TR_CG_Ab_NLP_LO(
 end
 
 """
-    ges = solver_TR_CG_Ab_NLP_LO_ges(nlp::AbstractNLPModel, B::AbstractLinearOperator{T}; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, kwargs..., ) where {T <: Number}
+    ges = solver_TR_CG_Ab_NLP_LO_ges(nlp::AbstractNLPModel, B::AbstractLinearOperator{T}; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0) where {T <: Number}
 
-Return a `GenericExecutionStats` from the quasi-Newton trust-region method `solver_TR_CG_Ab_NLP_LO`.
+Return a `GenericExecutionStats` from the quasi-Newton trust-region method `solver_TR_CG_Ab_NLP_LO` given the linear-operator `B`.
 """
 function solver_TR_CG_Ab_NLP_LO_ges(
   nlp::AbstractNLPModel,

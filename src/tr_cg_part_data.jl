@@ -9,12 +9,12 @@ export generic_algorithm_wrapper
 """
     Counter
 
-Substitute to `NLPModels.Counters` since the partitioned methods don't relie (for now) to `PartiallySeparableNLPModel`.
+Substitute to `NLPModels.Counters` since the partitioned methods don't relie (for now) on `PartiallySeparableNLPModel`s.
 It has fields:
 
-* `neval_obj::Int`: count the objective evaluations;
-* `neval_grad::Int`: count the objective gradient;
-* `neval_Hprod::Int`: count the objective Hessian-approximation-vector products.
+* `neval_obj::Int`: count objective evaluations;
+* `neval_grad::Int`: count gradient computations;
+* `neval_Hprod::Int`: count Hessian-approximation-vector products.
 """
 mutable struct Counter
   neval_obj::Int
@@ -28,8 +28,8 @@ increase_Hv(c::Counter) = c.neval_Hprod += 1
 """
     ges = generic_algorithm_wrapper(nlp::AbstractNLPModel, part_data::PartiallySeparableNLPModels.PartitionedData; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs...)
 
-Produce a `GenericExecutionStats` for a partitioned quasi-Newton method `applied` on an `nlp` model paired a `part_data::PartitionedDate`.
-Update `nlp.counters` with the informations of `Mod_TR_CG_part_data.Counter`
+Produce a `GenericExecutionStats` for a partitioned quasi-Newton trust-region method apply on `part_data::PartitionedDate` paired with an `nlp` model.
+The counter `nlp.counters` are updated with the informations of `Mod_TR_CG_part_data.Counter` to ease the definition of a `GenericExecutionStats`.
 """
 function generic_algorithm_wrapper(
   nlp::AbstractNLPModel,
@@ -102,8 +102,8 @@ end
 """
     (x, iter) = TR_CG_PD(part_data::PartiallySeparableNLPModels.PartitionedData; x::AbstractVector = copy(get_x(part_data)), n::Int = get_n(part_data), max_eval::Int = 10000, max_iter::Int = 10000, max_time::Float64 = 30.0, atol::Real = √eps(eltype(x)), rtol::Real = √eps(eltype(x)), start_time::Float64 = time(), η::Float64 = 1e-3, η₁::Float64 = 0.75, # > η Δ::Float64 = 1.0, ϵ::Float64 = 1e-6, ϕ::Float64 = 2.0, ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x), cpt::Counter = Counter(0, 0, 0), iter_print::Int64 = Int(floor(max_iter / 100)), T = eltype(x), verbose = true, kwargs...)
 
-Partitioned quasi-Newton method trust-reigon applied on `part_data`.
-It return the the point `x`, the current point satisfying stopping criteria, and how many `iter`ations it took to reach `x`.
+Partitioned quasi-Newton method trust-region apply on `part_data`.
+It return the the point `x`, the point satisfying stopping criterias, and how many `iter`ations it took to reach `x`.
 """
 function TR_CG_PD(
   part_data::PartiallySeparableNLPModels.PartitionedData;

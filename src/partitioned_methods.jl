@@ -42,8 +42,9 @@ end
 """
     ges = PUS(nlp::AbstractNLPModel; name = :plse, kwargs...)
 
-`PUS` (partitioned update solver) return a `ges::GenericExecutionStats` from the execution of a partitioned quasi-Newton trust-region method.
-It performs a:
+`PUS` (partitioned update solver) return a `ges::GenericExecutionStats` from a partitioned quasi-Newton trust-region method.
+It can perform several variants, which can be select with the optional argument `name`.
+You will perform a:
 
 * PBFGS method with `name=:pbfgs`;
 * PSR1 method with `name=:psr1`;
