@@ -136,13 +136,13 @@ function TR_CG_PD(
   _max_time(start_time) = (time() - start_time) < max_time
   while absolute(n, gₖ, ϵ) &&
           relative(n, gₖ, ϵ, ∇fNorm2) &&
-          _max_iter(iter, max_iter) & _max_time(start_time)# stop condition
+          _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
     verbose && (@printf "%3d %4g %8.1e %7.1e %7.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
     iter += 1
     cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
-    sₖ .= cg_res[1]  # result of the linear system solved by Krylov.cg
+    sₖ .= cg_res[1] # the step deduce by cg
 
-    (ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt = cpt) # we compute the ratio			
+    (ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt = cpt) # compute pk
 
     if ρₖ > η
       x .= x .+ sₖ

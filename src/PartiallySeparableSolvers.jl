@@ -13,7 +13,7 @@ include("partitioned_methods.jl")
 
 using ..Mod_partitioned_methods
 
-export PUS
+export PUS # Partitioned update solver
 export my_LBFGS, my_LSR1
 
 end

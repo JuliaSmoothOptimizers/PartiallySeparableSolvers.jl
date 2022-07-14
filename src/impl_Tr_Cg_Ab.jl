@@ -65,12 +65,14 @@ function solver_TR_CG_Ab_NLP_LO(
   B::AbstractLinearOperator{T};
   x::AbstractVector = copy(nlp.meta.x0),
   max_eval::Int = 10000,
+  max_iter::Int = 10000,
+  start_time::Float64 = time(),
+  max_time::Float64 = 30.0,
   atol::Real = √eps(eltype(x)),
   rtol::Real = √eps(eltype(x)),
   verbose=true,
   kwargs...,
 ) where {T <: Number}
-  T2 = eltype(x)
   (η, η1, Δ, ϵ, iter) = (1e-3, 0.75, 1.0, 10^-6, 0)
   n = nlp.meta.nvar
 
@@ -80,28 +82,33 @@ function solver_TR_CG_Ab_NLP_LO(
   yk = similar(g)
   NLPModels.grad!(nlp, x, ∇f₀)
   g .= ∇f₀
-  ∇fNorm2 = nrm2(n, ∇f₀)
+  ∇f₀Norm2 = nrm2(n, ∇f₀)
 
   f_xk = NLPModels.obj(nlp, x)
-  verbose && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk norm(g, 2) Δ)
+  verbose && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk ∇f₀Norm2 Δ)
 
-  cgtol = one(T2)  # Must be ≤ 1.
-  cgtol = max(rtol, min(T2(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
+  cgtol = one(T)  # Must be ≤ 1.
+  cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇f₀Norm2)))
 
-  while (nrm2(n, g) > ϵ) && (nrm2(n, g) > ϵ * ∇fNorm2) && iter < max_eval  # stop condition
+  absolute(n, gₖ, ϵ) = norm(gₖ, 2) > ϵ
+  relative(n, gₖ, ϵ, ∇f₀Norm2) = norm(gₖ, 2) > ϵ * ∇f₀Norm2
+  _max_iter(iter, max_iter) = iter < max_iter
+  _max_time(start_time) = (time() - start_time) < max_time
+  while absolute(n, g, ϵ) &&
+          relative(n, g, ϵ, ∇f₀Norm2) &&
+          _max_iter(iter, max_iter) & _max_time(start_time)
+          
     iter = iter + 1
 
-    cg_res = Krylov.cg(B, -g, atol = T2(atol), rtol = cgtol, radius = Δ, itmax = max(2 * n, 50))
-    sk .= cg_res[1]  # result of the linear system solved by Krylov.cg
+    cg_res = Krylov.cg(B, -g, atol = T(atol), rtol = cgtol, radius = Δ, itmax = max(2 * n, 50))
+    sk .= cg_res[1] # the step deduce by cg
 
-    (pk, f_temp) = compute_ratio(x, f_xk, sk, nlp, B, g; η, η1) # we compute the ratio
+    (pk, f_temp) = compute_ratio(x, f_xk, sk, nlp, B, g) # compute pk
 
-    Δ = upgrade_TR_LO!(pk, x, sk, g, yk, B, nlp, Δ) # upgrade x,g,B,∆
-
-    if pk > η
-      f_xk = f_temp
-    end
-    verbose && (mod(iter, 500) == 0) && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk norm(g, 2) Δ)
+    Δ = upgrade_TR_LO!(pk, x, sk, g, yk, B, nlp, Δ; η, η1) # upgrade x, g, B, ∆
+    (pk > η) && (f_xk = f_temp)
+        
+    verbose && (mod(iter, 50) == 0) && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk norm(g, 2) Δ)
     
   end
 
@@ -110,64 +117,81 @@ function solver_TR_CG_Ab_NLP_LO(
   return (x, iter)
 end
 
-#=
-MISE EN FORME DES RESULTATS
-=#
+"""
+    ges = solver_TR_CG_Ab_NLP_LO_ges(nlp::AbstractNLPModel, B::AbstractLinearOperator{T}; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, kwargs..., ) where {T <: Number}
 
-function solver_TR_CG_Ab_NLP_LO_res(
+Return a `GenericExecutionStats` from the quasi-Newton trust-region method `solver_TR_CG_Ab_NLP_LO`.
+"""
+function solver_TR_CG_Ab_NLP_LO_ges(
   nlp::AbstractNLPModel,
   B::AbstractLinearOperator{T};
   max_eval::Int = 10000,
+  max_iter::Int = 10000,
+  start_time::Float64 = time(),
+  max_time::Float64 = 30.0,
+  ϵ::Float64 = 1e-6,
   kwargs...,
 ) where {T <: Number}
-  Δt = @timed ((x_final, iter) = solver_TR_CG_Ab_NLP_LO(nlp, B; max_eval = max_eval, kwargs...))
   x_init = nlp.meta.x0
-  nrm_grad = norm(NLPModels.grad(nlp, x_final), 2)
-  nrm_grad_init = norm(NLPModels.grad(nlp, x_init), 2)
-  if nrm_grad < nrm_grad_init * 1e-6 || nrm_grad < 1e-6
+  n = length(x_init)
+  ∇f₀ = NLPModels.grad(nlp, x_init)
+  ∇f₀Norm2 = norm(∇f₀, 2)
+
+  (x_final, iter) = solver_TR_CG_Ab_NLP_LO(nlp, B; max_eval = max_eval, kwargs...)
+  Δt = time() - start_time
+  
+  f = NLPModels.obj(nlp, x_final)
+  g = NLPModels.grad(nlp, x_final)
+  ∇fNorm2 = norm(g, 2)
+
+  absolute(n, ∇fNorm2, ϵ) = ∇fNorm2 < ϵ
+  relative(n, ∇fNorm2, ϵ, ∇f₀Norm2) = ∇fNorm2 < ϵ * ∇f₀Norm2
+  _max_iter(iter, max_iter) = iter >= max_iter
+  _max_time(start_time) = (time() - start_time) >= max_time
+
+  if absolute(n, ∇fNorm2, ϵ) || relative(n, ∇fNorm2, ϵ, ∇f₀Norm2)
     status = :first_order
-  elseif iter >= max_eval
+    println("stationnary point ✅")
+  elseif _max_iter(iter, max_iter)
     status = :max_eval
+    println("Max eval ❌")
+  elseif _max_time(start_time)
+    status = :max_time
+    println("Max time ❌")
   else
     status = :unknown
+    println("Unknown ❌")
   end
-  return GenericExecutionStats(
+  ges = GenericExecutionStats(
     status,
     nlp,
     solution = x_final,
     iter = iter,
-    dual_feas = nrm_grad,
-    objective = NLPModels.obj(nlp, x_final),
-    elapsed_time = Δt[2],
+    dual_feas = ∇fNorm2,
+    objective = f,
+    elapsed_time = Δt,
   )
+  return ges
 end
 
 function my_LSR1(
   nlp::AbstractNLPModel;
   x::AbstractVector = copy(nlp.meta.x0),
+  T = eltype(x),
   kwargs...,
 )
-  T = eltype(x)
-  B = LSR1Operator(nlp.meta.nvar, scaling = true)::LSR1Operator{T} #scaling=true
+  B = LSR1Operator(nlp.meta.nvar, scaling = true)::LSR1Operator{T}
   println("\n\t LSR1 trust-region method")
-  return solver_TR_CG_Ab_NLP_LO_res(nlp, B; x = x, kwargs...)
+  return solver_TR_CG_Ab_NLP_LO_ges(nlp, B; x = x, kwargs...)
 end
-
-#=
-FIN DE LA PARTIE L-SR1
--------------------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------------------
-Création du LinearOperators L-BFGS, et mise en forme des résultats
-Une première partie sans paramètres nommés
-=#
 
 function my_LBFGS(
   nlp::AbstractNLPModel;
   x::AbstractVector = copy(nlp.meta.x0),
+  T = eltype(x),
   kwargs...,
 )
-  T = eltype(x)
-  B = LBFGSOperator(nlp.meta.nvar, scaling = true)::LBFGSOperator{T} #scaling=true
+  B = LBFGSOperator(nlp.meta.nvar, scaling = true)::LBFGSOperator{T}
   println("\n\t LBFGS trust-region method")
-  return solver_TR_CG_Ab_NLP_LO_res(nlp, B; x = x, kwargs...)
+  return solver_TR_CG_Ab_NLP_LO_ges(nlp, B; x = x, kwargs...)
 end
