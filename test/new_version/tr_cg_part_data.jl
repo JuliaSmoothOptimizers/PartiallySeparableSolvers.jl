@@ -1,6 +1,6 @@
-@testset "PUS Rosenbrock" begin
+@testset "PUS Arwhead" begin
   n = 10
-  nlp = MathOptNLPModel(OptimizationProblems.arwhead(n), name = "arwhead " * string(n))
+  nlp = arwhead(;n)
 
   ges_plbfgs = PUS(nlp; name = :plbfgs, verbose=false)
   ges_plbfgs_damped = PUS(nlp; name = :plbfgs, damped = true, verbose=false)

@@ -8,7 +8,8 @@ using ModelingToolkit
 using ExpressionTreeForge, PartiallySeparableNLPModels, PartitionedStructures
 
 include("impl_Tr_Cg_Ab.jl")
-include("new_version/_include.jl")
+include("tr_cg_part_data.jl")
+include("partitioned_methods.jl")
 
 using ..Mod_partitioned_methods
 
