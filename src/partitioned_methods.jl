@@ -11,7 +11,7 @@ export PUS
     expr_tree, n, x0 = get_expr_tree(nlp::MathOptNLPModel; x0::Vector{T} = copy(nlp.meta.x0), kwargs...) where {T <: Number}
     expr_tree, n, x0 = get_expr_tree(adnlp::ADNLPModel; x0::Vector{T} = copy(adnlp.meta.x0), kwargs...) where {T <: Number}
 
-Return the `expr_tree`, the size `n` and the intial point `x0` from either a `MathOptNLPModel` or a `ADNLPModel`.
+Return the `expr_tree`, the size `n` and the initial point `x0` from either a `MathOptNLPModel` or a `ADNLPModel`.
 """
 function get_expr_tree(
   nlp::MathOptNLPModel;
