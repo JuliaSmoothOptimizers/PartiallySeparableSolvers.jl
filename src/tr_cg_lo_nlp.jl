@@ -180,7 +180,7 @@ function my_LSR1(
   kwargs...,
 )
   B = LSR1Operator(nlp.meta.nvar, scaling = true)::LSR1Operator{T}
-  println("\n\t LSR1 trust-region method")
+  println("Start: LSR1 trust-region method")
   return solver_TR_CG_Ab_NLP_LO_ges(nlp, B; x = x, kwargs...)
 end
 
@@ -191,6 +191,6 @@ function my_LBFGS(
   kwargs...,
 )
   B = LBFGSOperator(nlp.meta.nvar, scaling = true)::LBFGSOperator{T}
-  println("\n\t LBFGS trust-region method")
+  println("Start: LBFGS trust-region method")
   return solver_TR_CG_Ab_NLP_LO_ges(nlp, B; x = x, kwargs...)
 end
