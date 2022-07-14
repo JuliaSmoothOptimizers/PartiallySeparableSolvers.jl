@@ -206,7 +206,7 @@ function compute_ratio(
   B::AbstractLinearOperator{T},
   gₖ::AbstractVector{T};
   cpt::Counter = Counter(0, 0, 0),
-) where {T<:Number}
+) where {T <: Number}
   mₖ₊₁ = fₖ + dot(gₖ, sₖ) + 1 / 2 * (dot((B * sₖ), sₖ))
   fₖ₊₁ = evaluate_obj_part_data(part_data, x + sₖ) # the evaluation set partdata.x to x+sₖ
   set_x!(part_data, x) # set x to its real value, mandatoy for the computation of y
