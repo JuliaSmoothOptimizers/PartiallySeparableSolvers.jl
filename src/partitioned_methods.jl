@@ -6,7 +6,6 @@ using ..Mod_TR_CG_part_data
 
 export get_expr_tree
 export PUS
-#  export PBFGS2, PLBFGS,
 
 function get_expr_tree(
   nlp::MathOptNLPModel;
@@ -33,20 +32,6 @@ function get_expr_tree(
   ex = ExpressionTreeForge.transform_to_expr_tree(fun)::ExpressionTreeForge.Type_expr_tree
   return ex, n, x0
 end
-
-# function PBFGS2(nlp::N; kwargs...) where {N <: AbstractNLPModel}
-#   (ex, n, x0) = get_expr_tree(nlp)
-#   part_data_pbfgs = build_PartitionedData_TR_PBFGS(ex, n; x0 = x0)
-#   ges = generic_algorithm_wrapper(nlp, part_data_pbfgs; kwargs...)
-#   return ges
-# end
-
-# function PLBFGS(nlp::N; kwargs...) where {N <: AbstractNLPModel}
-#   (ex, n, x0) = get_expr_tree(nlp)
-#   part_data_plbfgs = build_PartitionedData_TR_PLBFGS(ex, n; x0 = x0)
-#   ges = generic_algorithm_wrapper(nlp, part_data_plbfgs; kwargs...)
-#   return ges
-# end
 
 function PUS(nlp::N; name = :plse, kwargs...) where {N <: AbstractNLPModel}
   (ex, n, x0) = get_expr_tree(nlp)
