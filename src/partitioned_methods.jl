@@ -22,7 +22,8 @@ function get_expr_tree(
   evaluator = JuMP.NLPEvaluator(model)
   MathOptInterface.initialize(evaluator, [:ExprGraph])
   obj_Expr = MathOptInterface.objective_expr(evaluator)::Expr
-  expr_tree = ExpressionTreeForge.transform_to_expr_tree(obj_Expr)::ExpressionTreeForge.Type_expr_tree
+  expr_tree =
+    ExpressionTreeForge.transform_to_expr_tree(obj_Expr)::ExpressionTreeForge.Type_expr_tree
   n = nlp.meta.nvar
   return expr_tree, n, x0
 end

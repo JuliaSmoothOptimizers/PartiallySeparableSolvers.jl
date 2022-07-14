@@ -25,17 +25,17 @@ function upgrade_TR_LO!(
   pk::Float64,
   x_k::AbstractVector{T},
   s_k::AbstractVector{T},
-  g_k::AbstractVector{T}, 
-  y_k::AbstractVector{T}, 
+  g_k::AbstractVector{T},
+  y_k::AbstractVector{T},
   B_k::AbstractLinearOperator{T},
   nlp::AbstractNLPModel,
   Δ::Float64;
   η::Float64 = 1e-3,
-  η1::Float64 = 0.75
-) where {T <: Number}  
+  η1::Float64 = 0.75,
+) where {T <: Number}
   if pk > η
     x_k .= x_k .+ s_k
-    y_k .= .- g_k
+    y_k .= .-g_k
     NLPModels.grad!(nlp, x_k, g_k)
     y_k .+= g_k
     push!(B_k, s_k, y_k)
@@ -69,7 +69,7 @@ function solver_TR_CG_Ab_NLP_LO(
   max_time::Float64 = 30.0,
   atol::Real = √eps(eltype(x)),
   rtol::Real = √eps(eltype(x)),
-  verbose=true,
+  verbose = true,
   kwargs...,
 ) where {T <: Number}
   (η, η1, Δ, ϵ, iter) = (1e-3, 0.75, 1.0, 10^-6, 0)
@@ -96,7 +96,6 @@ function solver_TR_CG_Ab_NLP_LO(
   while absolute(n, g, ϵ) &&
           relative(n, g, ϵ, ∇f₀Norm2) &&
           _max_iter(iter, max_iter) & _max_time(start_time)
-          
     iter = iter + 1
 
     cg_res = Krylov.cg(B, -g, atol = T(atol), rtol = cgtol, radius = Δ, itmax = max(2 * n, 50))
@@ -106,9 +105,8 @@ function solver_TR_CG_Ab_NLP_LO(
 
     Δ = upgrade_TR_LO!(pk, x, sk, g, yk, B, nlp, Δ; η, η1) # upgrade x, g, B, ∆
     (pk > η) && (f_xk = f_temp)
-        
+
     verbose && (mod(iter, 50) == 0) && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk norm(g, 2) Δ)
-    
   end
 
   verbose && (@printf "%3d %8.1e %7.1e %7.1e  \n" iter f_xk norm(g, 2) Δ)
@@ -138,7 +136,7 @@ function solver_TR_CG_Ab_NLP_LO_ges(
 
   (x_final, iter) = solver_TR_CG_Ab_NLP_LO(nlp, B; max_eval = max_eval, kwargs...)
   Δt = time() - start_time
-  
+
   f = NLPModels.obj(nlp, x_final)
   g = NLPModels.grad(nlp, x_final)
   ∇fNorm2 = norm(g, 2)

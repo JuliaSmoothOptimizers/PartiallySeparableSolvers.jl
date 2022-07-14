@@ -1,8 +1,8 @@
 @testset "element function decomposition" begin
   n = 10
-  
-  nlp = arwhead(;n)
-  
+
+  nlp = arwhead(; n)
+
   (ex, n, x0) = get_expr_tree(nlp)
   part_data_pbfgs = build_PartitionedDataTRPQN(ex, n; x0 = x0)
 
