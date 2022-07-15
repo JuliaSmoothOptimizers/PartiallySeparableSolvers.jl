@@ -17,8 +17,8 @@ jobs:
       - name: Installing non-registered dependencies
         run: |
           using Pkg
-          pkg1 = PackageSpec(url = "https://github.com/JuliaSmoothOptimizers/ExpressionTreeForge.jl.git")
-          pkg2 = PackageSpec(url = "https://github.com/JuliaSmoothOptimizers/PartiallySeparableNLPModels.jl.git")
+          pkg1 = PackageSpec(url = "https://github.com/JuliaSmoothOptimizers/PartiallySeparableNLPModels.jl.git")
+          pkg2 = PackageSpec(url = "https://github.com/paraynaud/PartiallySeparableSolvers.jl.git")          
           pkg_list = [pkg1, pkg2]
           Pkg.add(pkg_list)
         shell: julia --project=docs --color=yes {0}          
