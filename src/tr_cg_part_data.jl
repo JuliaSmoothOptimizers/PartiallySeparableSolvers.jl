@@ -125,7 +125,7 @@ function TR_CG_PD(
   cpt::Counter = Counter(0, 0, 0),
   iter_print::Int64 = Int(floor(max_iter / 100)),
   T = eltype(x),
-  verbose = true,
+  verbose = false,
   kwargs...,
 )
   iter = 0 # ≈ k
@@ -136,7 +136,7 @@ function TR_CG_PD(
 
   fₖ = evaluate_obj_part_data(part_data, x)
 
-  verbose && (@printf "iter temps fₖ norm(gₖ,2) Δ\n")
+  verbose && (@printf " iter time  fₖ      norm(gₖ)  Δ\n")
 
   cgtol = one(T)  # Must be ≤ 1.
   cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
@@ -159,7 +159,7 @@ function TR_CG_PD(
   while absolute(n, gₖ, ϵ) &&
           relative(n, gₖ, ϵ, ∇fNorm2) &&
           _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
-    verbose && (@printf "%3d %4g %8.1e %7.1e %7.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
+    verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
     iter += 1
     cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
     sₖ .= cg_res[1] # the step deduce by cg
@@ -174,7 +174,7 @@ function TR_CG_PD(
         part_data,
         sₖ;
         name = part_data.name,
-        verbose = verbose,
+        verbose = false,
       )
       gₖ .= PartitionedStructures.get_v(get_pg(part_data))
       build_v!(get_pg(part_data))
@@ -188,7 +188,7 @@ function TR_CG_PD(
     (ρₖ >= η₁ && norm(sₖ, 2) >= 0.8 * Δ) ? Δ = ϕ * Δ : Δ = Δ
     (ρₖ <= η) && (Δ = 1 / ϕ * Δ)
   end
-  verbose && (@printf "%3d %4g %8.1e %7.1e %7.1e \n" iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
+  verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
   return (x, iter)
 end
 

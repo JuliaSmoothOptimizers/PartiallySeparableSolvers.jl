@@ -7,7 +7,7 @@ PartiallySeparableSolvers.jl defines a solver exploiting automatically the parti
  f(x) = \sum_{i=1}^N f_i (U_i x) , \; f_i : \R^{n_i} \to \R, \; U_i \in \R^{n_i \times n},\; n_i \ll n,
 ```
 where $f$ is the sum of element functions $f_i$.
-This solver exploit the partitioned structure of the gradient
+This solver exploits the partitioned structure of the gradient
 ```math
 \nabla f(x) = \sum_{i=1}^N U_i^\top \nabla f_i (U_i x),
 ```
@@ -15,27 +15,27 @@ and the Hessian
 ```math
 \nabla^2 f(x) = \sum_{i=1}^N U_i^\top \nabla^2 f_i (U_i x) U_i,
 ```
-to produce partitioned a quasi-Newton approximation
+to maintain a partitioned a quasi-Newton approximation
 ```math
 B = \sum_{i=1}^N U_i^\top B_{i} U_i,
 ```
-where each $B_{i} \approx \nabla^2 f_i$.
+where each $B_{i} \approx \nabla^2 f_i$ has size $n_i \times n_i$.
 
-The usual quasi-Newton updates SR1, BFGS or limited-memory variant LSR1, LBFGS approximate $\nabla^2 f(x)\approx B$ by low rank updates producing inevitably a dense approximations.
-By relying on element Hessian approximations $B_i$, updated at each iterate, the partitioned updates keep the Hessian sparse structure and perform updates of rank $\min(\lambda N,n), \; \lambda = 1,2$ depending on the update applied to $B_i$.
+The usual quasi-Newton updates, such as SR1, BFGS, or their limited-memory variants LSR1 or LBFGS approximate $\nabla^2 f(x)\approx B$ by low rank updates producing inevitably dense approximations.
+By relying on element Hessian approximations $B_i$, updated at each iteration, the partitioned updates respect the Hessian sparsity structure and perform updates of rank $\min(\lambda N,n), \; \lambda = 1,2$ depending on the update applied to $B_i$.
 
-See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) to get more details about partitioned quasi-Newton approximation and how it compares with BFGS.
-Some of these partitioned quasi-Newton methods are detail in the reference below, and some are news (see PartitionedStructures.jl).
+See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) to get more details about partitioned quasi-Newton approximations and how they compare with standard updates.
+Some of these partitioned quasi-Newton methods are detailed in the reference below, and some are new (see PartitionedStructures.jl).
 #### Reference
-* A. Griewank and P. Toint, [*Partitioned variable metric updates for large structured optimization problems*](10.1007/BF01399316), Numerische Mathematik volume, 39, pp. 119--137, 1982.
+* A. Griewank and P. Toint, [*Partitioned variable metric updates for large structured optimization problems*](https://link.springer.com/article/10.1007/BF01399316), Numerische Mathematik volume, 39, pp. 119--137, 1982.
 
 
-## Run a partitioned quasi-Newton solver
-For now, PartiallySeparableSolvers.jl supports either an [ADNLPModel](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl), which is defined by pure julia code, or a [MathOptNLPModel](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl) based on a [JuMP](https://github.com/jump-dev/JuMP.jl) model.
-Wether the model used, running the solver will return a [`GenericExecutionStats`](https://juliasmoothoptimizers.github.io/SolverCore.jl/dev/reference/#SolverCore.GenericExecutionStats).
+## Running a partitioned quasi-Newton solver
+For now, PartiallySeparableSolvers.jl supports [ADNLPModel](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl)s, which are defined by pure julia code, or [MathOptNLPModel](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl)s based on [JuMP](https://github.com/jump-dev/JuMP.jl) models.
+Regardless of which model is used, the solver returns a [`GenericExecutionStats`](https://juliasmoothoptimizers.github.io/SolverCore.jl/dev/reference/#SolverCore.GenericExecutionStats).
 
 ### An `ADNLPModel`
-You first define the function that you seek to minimize and wrap it an `ADNLPModel`:
+Let's first define the function that we seek to minimize and wrap it into an `ADNLPModel`:
 ```@example PSSolver
 using ADNLPModels
 
@@ -50,44 +50,27 @@ example_ADNLPModel(n :: Int=100) = ADNLPModel(example, start_example(n), name="E
 n = 10 # size of the problem
 adnlp_model = example_ADNLPModel(n)
 ```
-### An `MathOptNLPModel`
-The same way, you can define a `MathOptNLPModel`:
-```@example PSSolver
-using JuMP, NLPModelsJuMP
 
-model_jump = Model()
-@variable(model_jump, x[1:n])
-@NLobjective(model_jump, Min, sum((x[j] + x[j+1])^2 for j = 1:n-1))
-variables = JuMP.all_variables(model_jump)
-JuMP.set_start_value.(variables, ones(n))
-mathopt_model = MathOptNLPModel(model_jump, name = "Example " * string(n))
-```
-
-### Run a partitioned quasi-Newton trust-region method
+### Running the partitioned quasi-Newton trust-region method
 You minimize your model by calling the partitioned-update solver `PUS`:
 ```@example PSSolver
 using PartiallySeparableSolvers
-ges = PUS(adnlp_model)
-print(ges)
-```
-
-```@example PSSolver
-ges = PUS(mathopt_model; verbose=false)
-print(ges)
+stats = PUS(adnlp_model)
+print(stats)
 ```
 
 The partitioned quasi-Newton update performed by `PUS` is chosen by the optional argument `name`.
-By choosing:
+Allowed values include:
 - `name=:pbfgs` each $B_i$ is updated by BFGS;
 - `name=:psr1` each $B_i$ is updated by SR1;
 - `name=:pse` each $B_i$ may be updated by both BFGS and SR1;
-- `name=:plbfgs` each $B_i$ is LBFGS operator;
-- `name=:plsr1` each $B_i$ is LSR1 operator;
-- `name=:plse` (by default) each $B_i$ may be a LBFGS or LSR1 operator.
+- `name=:plbfgs` each $B_i$ is an LBFGS operator;
+- `name=:plsr1` each $B_i$ is an LSR1 operator;
+- `name=:plse` (by default) each $B_i$ may be an LBFGS or LSR1 operator.
 
 ```@example PSSolver
-ges = PUS(mathopt_model; name=:pbfgs)
-print(ges)
+stats = PUS(mathopt_model; name=:pbfgs)
+print(stats)
 ```
 
-See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) to get more details about partitioned quasi-Newton approximations.
+See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) for more details about partitioned quasi-Newton approximations.
