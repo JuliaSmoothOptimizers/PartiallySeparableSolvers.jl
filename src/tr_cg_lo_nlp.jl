@@ -171,6 +171,11 @@ function solver_TR_CG_Ab_NLP_LO_ges(
   return ges
 end
 
+"""
+    stats = my_LSR1(nlp::AbstractNLPModel; x::AbstractVector = copy(nlp.meta.x0), T = eltype(x), kwargs...)
+
+Personnal implementation of LSR1 trust-region.
+"""
 function my_LSR1(
   nlp::AbstractNLPModel;
   x::AbstractVector = copy(nlp.meta.x0),
@@ -182,6 +187,11 @@ function my_LSR1(
   return solver_TR_CG_Ab_NLP_LO_ges(nlp, B; x = x, kwargs...)
 end
 
+"""
+    stats = my_LBFGS(nlp::AbstractNLPModel; x::AbstractVector = copy(nlp.meta.x0), T = eltype(x), kwargs...)
+
+Personnal implementation of LBFGS trust-region.
+"""
 function my_LBFGS(
   nlp::AbstractNLPModel;
   x::AbstractVector = copy(nlp.meta.x0),
