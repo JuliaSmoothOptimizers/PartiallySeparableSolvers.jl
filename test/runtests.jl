@@ -12,5 +12,4 @@ using PartiallySeparableSolvers.Mod_partitioned_methods
 include("models.jl")
 include("pss.jl")
 include("partitioned_methods.jl")
-include("limited_memory.jl")
 include("tr_cg_part_data.jl")
