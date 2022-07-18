@@ -1,10 +1,10 @@
-module Mod_TR_CG_part_data
+module ModTrustRegionPartitionedData
 
 using ExpressionTreeForge, PartitionedStructures, PartiallySeparableNLPModels
 using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
 using Printf, SolverCore
 
-export generic_algorithm_wrapper
+export partitionedTrunk
 
 """
     Counter
@@ -26,13 +26,13 @@ increase_grad!(c::Counter) = c.neval_grad += 1
 increase_Hv(c::Counter) = c.neval_Hprod += 1
 
 """
-    ges = generic_algorithm_wrapper(nlp::AbstractNLPModel, part_data::PartiallySeparableNLPModels.PartitionedData; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs...)
+    stats = partitionedTrunk(nlp::AbstractNLPModel, part_data::PartiallySeparableNLPModels.PartitionedData; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs...)
 
 Produce a `GenericExecutionStats` for a partitioned quasi-Newton trust-region method.
 It requires the partitioned structures of `part_data::PartitionedDate` paired with an `nlp` model.
-The counter `nlp.counters` are updated with the informations of `Mod_TR_CG_part_data.Counter` to ease the definition of a `GenericExecutionStats`.
+The counter `nlp.counters` are updated with the informations of `ModTrustRegionPartitionedData.Counter` to ease the definition of a `GenericExecutionStats`.
 """
-function generic_algorithm_wrapper(
+function partitionedTrunk(
   nlp::AbstractNLPModel,
   part_data::PartiallySeparableNLPModels.PartitionedData;
   max_eval::Int = 10000,
@@ -51,7 +51,7 @@ function generic_algorithm_wrapper(
 
   cpt = Counter(0, 0, 0)
   println("Start: " * name_method)
-  (x, iter) = TR_CG_PD(
+  (x, iter) = partitionedTrunkCore(
     part_data;
     max_eval = max_eval,
     max_iter = max_iter,
@@ -88,7 +88,7 @@ function generic_algorithm_wrapper(
     status = :unknown
     println("Unknown ❌")
   end
-  ges = GenericExecutionStats(
+  stats = GenericExecutionStats(
     status,
     nlp,
     solution = x,
@@ -97,16 +97,16 @@ function generic_algorithm_wrapper(
     objective = f,
     elapsed_time = Δt,
   )
-  return ges
+  return stats
 end
 
 """
-    (x, iter) = TR_CG_PD(part_data::PartiallySeparableNLPModels.PartitionedData; x::AbstractVector = copy(get_x(part_data)), n::Int = get_n(part_data), max_eval::Int = 10000, max_iter::Int = 10000, max_time::Float64 = 30.0, atol::Real = √eps(eltype(x)), rtol::Real = √eps(eltype(x)), start_time::Float64 = time(), η::Float64 = 1e-3, η₁::Float64 = 0.75, # > η Δ::Float64 = 1.0, ϵ::Float64 = 1e-6, ϕ::Float64 = 2.0, ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x), cpt::Counter = Counter(0, 0, 0), iter_print::Int64 = Int(floor(max_iter / 100)), T = eltype(x), verbose = true, kwargs...)
+    (x, iter) = partitionedTrunkCore(part_data::PartiallySeparableNLPModels.PartitionedData; x::AbstractVector = copy(get_x(part_data)), n::Int = get_n(part_data), max_eval::Int = 10000, max_iter::Int = 10000, max_time::Float64 = 30.0, atol::Real = √eps(eltype(x)), rtol::Real = √eps(eltype(x)), start_time::Float64 = time(), η::Float64 = 1e-3, η₁::Float64 = 0.75, # > η Δ::Float64 = 1.0, ϵ::Float64 = 1e-6, ϕ::Float64 = 2.0, ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x), cpt::Counter = Counter(0, 0, 0), iter_print::Int64 = Int(floor(max_iter / 100)), T = eltype(x), verbose = true, kwargs...)
 
 Partitioned quasi-Newton trust-region method apply on the partitioned structures of `part_data`.
 The method return the point `x` and the number of `iter`ations performed before it reaches the stopping criterias.
 """
-function TR_CG_PD(
+function partitionedTrunkCore(
   part_data::PartiallySeparableNLPModels.PartitionedData;
   x::AbstractVector = copy(get_x(part_data)),
   n::Int = get_n(part_data),

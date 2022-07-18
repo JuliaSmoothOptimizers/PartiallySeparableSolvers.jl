@@ -1,11 +1,11 @@
-module Mod_partitioned_methods
+module ModPartitionedMethods
 using JuMP, MathOptInterface, ModelingToolkit
 using ADNLPModels, NLPModels, NLPModelsJuMP
 using ExpressionTreeForge, PartiallySeparableNLPModels
-using ..Mod_TR_CG_part_data
+using ..ModTrustRegionPartitionedData
 
 export get_expr_tree
-export PUS
+export PTRUNK
 
 """
     expr_tree, n, x0 = get_expr_tree(nlp::MathOptNLPModel; x0::Vector{T} = copy(nlp.meta.x0), kwargs...) where {T <: Number}
@@ -15,7 +15,7 @@ Return the `expr_tree`, the size `n` and the initial point `x0` from either a `M
 """
 function get_expr_tree(
   nlp::MathOptNLPModel;
-  x0::Vector{T} = copy(nlp.meta.x0),
+  x0::AbstractVector{T} = copy(nlp.meta.x0),
   kwargs...,
 ) where {T <: Number}
   model = nlp.eval.m
@@ -30,7 +30,7 @@ end
 
 function get_expr_tree(
   adnlp::ADNLPModel;
-  x0::Vector{T} = copy(adnlp.meta.x0),
+  x0::AbstractVector{T} = copy(adnlp.meta.x0),
   kwargs...,
 ) where {T <: Number}
   n = adnlp.meta.nvar
@@ -41,24 +41,28 @@ function get_expr_tree(
 end
 
 """
-    ges = PUS(nlp::AbstractNLPModel; name = :plse, kwargs...)
+    stats = PTRUNK(nlp::AbstractNLPModel; name = :plse, kwargs...)
 
-`PUS` (partitioned update solver) return a `ges::GenericExecutionStats` from a partitioned quasi-Newton trust-region method.
-It can perform several variants, which can be select with the optional argument `name`.
-You will perform a:
+`PTRUNK` (partitioned update solver) return a `stats::GenericExecutionStats` from a partitioned quasi-Newton trust-region method.
+Several variants are available via the optional argument `name`.
+Each variant approximate the element-Hessians differently, some use dense matrices while others use linear-operators.
+Variants with dense element-Hessian approximations:
 
-* PBFGS method with `name=:pbfgs`;
-* PSR1 method with `name=:psr1`;
-* PSE method with `name=:pse`;
-* PLBFGS method with `name=:plbfgs`;
-* PLSR1 method with `name=:plsr1`;
-* PLSE method with `name=:plse`, by default.
+* PBFGS with `name=:pbfgs`, every element-Hessian approximation is updated with BFGS;
+* PSR1 with `name=:psr1`, every element-Hessian approximation is updated with SR1;
+* PSE with `name=:pse`, every element-Hessian approximation is updated with BFGS or SR1 if the curvature condition doesn't hold.
+
+Variants with linear-operator element-Hessian approximations:
+
+* PLBFGS with `name=:plbfgs`, every element-Hessian approximations is a LBFGS operator;
+* PLSR1 with `name=:plsr1`, every element-Hessian approximations is a LSR1 operator;
+* PLSE with `name=:plse`, by default, every element-Hessian approximations is a LBFGS operator as long as the curvature condition holds, otherwise it becomes a LSR1 operator.
 """
-function PUS(nlp::AbstractNLPModel; name = :plse, kwargs...)
+function PTRUNK(nlp::AbstractNLPModel; name = :plse, kwargs...)
   (ex, n, x0) = get_expr_tree(nlp)
   part_data_pqn = build_PartitionedDataTRPQN(ex, n; name = name, x0 = x0)
-  ges = generic_algorithm_wrapper(nlp, part_data_pqn; kwargs...)
-  return ges
+  stats = partitionedTrunk(nlp, part_data_pqn; kwargs...)
+  return stats
 end
 
 end

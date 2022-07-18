@@ -7,7 +7,7 @@ using ADNLPModels, NLPModels, NLPModelsJuMP
 using OptimizationProblems, OptimizationProblems.ADNLPProblems
 using ModelingToolkit
 
-using PartiallySeparableSolvers.Mod_partitioned_methods
+using PartiallySeparableSolvers.ModPartitionedMethods
 
 include("models.jl")
 include("pss.jl")
