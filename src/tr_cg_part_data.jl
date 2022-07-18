@@ -35,59 +35,125 @@ The counter `nlp.counters` are updated with the informations of `ModTrustRegionP
 function partitionedTrunk(
   nlp::AbstractNLPModel,
   part_data::PartiallySeparableNLPModels.PartitionedData;
+  x₀ = get_x(part_data),
+  T = eltype(x₀),
+  n = get_n(part_data),
   max_eval::Int = 10000,
   max_iter::Int = 10000,
   start_time::Float64 = time(),
   max_time::Float64 = 30.0,
+  atol::Real = √eps(eltype(x₀)),
+  rtol::Real = √eps(eltype(x₀)),
   ϵ::Float64 = 1e-6,
+  η::Float64 = 1e-3,
+  η₁::Float64 = 0.75, # > η
+  Δ::Float64 = 1.0,
+  ϕ::Float64 = 2.0,
   name = part_data.name,
   name_method::String = "Trust-region " * String(name),
+  verbose=false,
+  verbose_part_update=false,
   kwargs...,
 )
-  x₀ = get_x(part_data)
-  n = get_n(part_data)
+  x = copy(x₀)
   ∇f₀ = evaluate_grad_part_data(part_data, x₀)
   ∇fNorm2 = norm(∇f₀, 2)
 
   cpt = Counter(0, 0, 0)
   println("Start: " * name_method)
-  (x, iter) = partitionedTrunkCore(
-    part_data;
-    max_eval = max_eval,
-    max_iter = max_iter,
-    max_time = max_time,
-    ∇f₀ = ∇f₀,
-    cpt = cpt,
-    kwargs...,
+  # (x, iter) = partitionedTrunkCore(
+  #   part_data;
+  #   max_eval = max_eval,
+  #   max_iter = max_iter,
+  #   max_time = max_time,
+  #   ∇f₀ = ∇f₀,
+  #   cpt = cpt,
+  #   kwargs...,
+  # )
+  iter = 0 # ≈ k
+  gₖ = copy(∇f₀)
+  gtmp = similar(gₖ)
+  sₖ = similar(x)
+
+  fₖ = evaluate_obj_part_data(part_data, x)
+
+  verbose && (@printf " iter time  fₖ      norm(gₖ)  Δ\n")
+
+  cgtol = one(T)  # Must be ≤ 1.
+  cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
+
+  ρₖ = -1
+  B = LinearOperators.LinearOperator(
+    T,
+    n,
+    n,
+    true,
+    true,
+    ((res, v) -> PartiallySeparableNLPModels.product_part_data_x!(res, part_data, v)),
   )
+
+  # stop condition
+  absolute(n, gₖ, ϵ) = norm(gₖ, 2) > ϵ
+  relative(n, gₖ, ϵ, ∇fNorm2) = norm(gₖ, 2) > ϵ * ∇fNorm2
+  _max_iter(iter, max_iter) = iter < max_iter
+  _max_time(start_time) = (time() - start_time) < max_time
+  while absolute(n, gₖ, ϵ) &&
+          relative(n, gₖ, ϵ, ∇fNorm2) &&
+          _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
+    verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
+    iter += 1
+    cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
+    sₖ .= cg_res[1] # the step deduce by cg
+
+    (ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt = cpt) # compute pk
+
+    if ρₖ > η
+      x .= x .+ sₖ
+      fₖ = fₖ₊₁
+      gtmp .= gₖ
+      PartiallySeparableNLPModels.update_nlp!(
+        part_data,
+        sₖ;
+        name = part_data.name,
+        verbose = verbose_part_update,
+      )
+      gₖ .= PartitionedStructures.get_v(get_pg(part_data))
+      build_v!(get_pg(part_data))
+      increase_grad!(cpt)
+      verbose && (@printf "✅\n")
+    else
+      fₖ = fₖ
+      verbose && (@printf "❌\n")
+    end
+    # trust region update
+    (ρₖ >= η₁ && norm(sₖ, 2) >= 0.8 * Δ) ? Δ = ϕ * Δ : Δ = Δ
+    (ρₖ <= η) && (Δ = 1 / ϕ * Δ)
+  end
+  verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
 
   Δt = time() - start_time
   f = evaluate_obj_part_data(part_data, x)
   g = evaluate_grad_part_data(part_data, x)
   nrm_grad = norm(g, 2)
 
-  nlp.counters.neval_obj = cpt.neval_obj
-  nlp.counters.neval_grad = cpt.neval_grad
-  nlp.counters.neval_hprod = cpt.neval_Hprod
-
-  absolute(n, gₖ, ϵ) = norm(gₖ, 2) < ϵ
-  relative(n, gₖ, ϵ, ∇fNorm2) = norm(gₖ, 2) < ϵ * ∇fNorm2
-  _max_iter(iter, max_iter) = iter >= max_iter
-  _max_time(start_time) = (time() - start_time) >= max_time
-
-  if absolute(n, g, ϵ) || relative(n, g, ϵ, ∇fNorm2)
+  if !absolute(n, g, ϵ)|| !relative(n, g, ϵ, ∇fNorm2)
     status = :first_order
     println("stationnary point ✅")
-  elseif _max_iter(iter, max_iter)
+  elseif !_max_iter(iter, max_iter)
     status = :max_eval
     println("Max eval ❌")
-  elseif _max_time(start_time)
+  elseif !_max_time(start_time)
     status = :max_time
     println("Max time ❌")
   else
     status = :unknown
     println("Unknown ❌")
   end
+
+  nlp.counters.neval_obj = cpt.neval_obj
+  nlp.counters.neval_grad = cpt.neval_grad
+  nlp.counters.neval_hprod = cpt.neval_Hprod
+  
   stats = GenericExecutionStats(
     status,
     nlp,
