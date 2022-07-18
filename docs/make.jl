@@ -1,11 +1,11 @@
 using Documenter
 using PartiallySeparableSolvers
 
-using PartiallySeparableSolvers.Mod_partitioned_methods,
-  PartiallySeparableSolvers.Mod_TR_CG_part_data
+using PartiallySeparableSolvers.ModPartitionedMethods,
+  PartiallySeparableSolvers.ModTrustRegionPartitionedData
 
 makedocs(
-  modules = [PartiallySeparableSolvers, Mod_partitioned_methods, Mod_TR_CG_part_data],
+  modules = [PartiallySeparableSolvers, ModPartitionedMethods, ModTrustRegionPartitionedData],
   doctest = true,
   # linkcheck = true,
   strict = false,

@@ -52,14 +52,14 @@ adnlp_model = example_ADNLPModel(n)
 ```
 
 ### Running the partitioned quasi-Newton trust-region method
-You minimize your model by calling the partitioned-update solver `PUS`:
+You minimize your model by calling the partitioned-update solver `PTRUNK`:
 ```@example PSSolver
 using PartiallySeparableSolvers
-stats = PUS(adnlp_model)
+stats = PTRUNK(adnlp_model)
 print(stats)
 ```
 
-The partitioned quasi-Newton update performed by `PUS` is chosen by the optional argument `name`.
+The partitioned quasi-Newton update performed by `PTRUNK` is chosen by the optional argument `name`.
 Allowed values include:
 - `name=:pbfgs` each $B_i$ is updated by BFGS;
 - `name=:psr1` each $B_i$ is updated by SR1;
@@ -69,7 +69,7 @@ Allowed values include:
 - `name=:plse` (by default) each $B_i$ may be an LBFGS or LSR1 operator.
 
 ```@example PSSolver
-stats = PUS(mathopt_model; name=:pbfgs)
+stats = PTRUNK(mathopt_model; name=:pbfgs)
 print(stats)
 ```
 
