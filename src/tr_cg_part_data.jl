@@ -61,15 +61,7 @@ function partitionedTrunk(
 
   cpt = Counter(0, 0, 0)
   println("Start: " * name_method)
-  # (x, iter) = partitionedTrunkCore(
-  #   part_data;
-  #   max_eval = max_eval,
-  #   max_iter = max_iter,
-  #   max_time = max_time,
-  #   ∇f₀ = ∇f₀,
-  #   cpt = cpt,
-  #   kwargs...,
-  # )
+
   iter = 0 # ≈ k
   gₖ = copy(∇f₀)
   gtmp = similar(gₖ)
@@ -153,7 +145,7 @@ function partitionedTrunk(
   nlp.counters.neval_obj = cpt.neval_obj
   nlp.counters.neval_grad = cpt.neval_grad
   nlp.counters.neval_hprod = cpt.neval_Hprod
-  
+
   stats = GenericExecutionStats(
     status,
     nlp,
