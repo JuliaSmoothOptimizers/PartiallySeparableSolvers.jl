@@ -65,6 +65,7 @@ Allowed values include:
 - `name=:plsr1` each $B_i$ is an LSR1 operator;
 - `name=:plse` (by default) each $B_i$ may be an LBFGS or LSR1 operator.
 
+Thus for example,
 ```@example PSSolver
 stats = PTRUNK(mathopt_model; name=:pbfgs)
 print(stats)
