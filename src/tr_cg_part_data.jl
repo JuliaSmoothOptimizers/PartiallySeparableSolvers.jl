@@ -51,8 +51,8 @@ function partitionedTrunk(
   ϕ::Float64 = 2.0,
   name = part_data.name,
   name_method::String = "Trust-region " * String(name),
-  verbose::Int=0,
-  verbose_part_update=false,
+  verbose::Int = 0,
+  verbose_part_update = false,
   kwargs...,
 )
   x = copy(x₀)
@@ -60,7 +60,7 @@ function partitionedTrunk(
   ∇f₀Norm2 = norm(∇f₀, 2)
 
   cpt = Counter(0, 0, 0)
-  verbose>0 && println("Start: " * name_method)
+  verbose > 0 && println("Start: " * name_method)
 
   iter = 0 # ≈ k
   gₖ = copy(∇f₀)
@@ -91,14 +91,7 @@ function partitionedTrunk(
     ((res, v) -> PartiallySeparableNLPModels.product_part_data_x!(res, part_data, v)),
   )
 
-  (verbose > 0) && @info log_row([
-    iter,
-    fₖ,
-    ∇fNorm2,
-    Δ,
-    ρₖ,
-    "initial point",
-  ])
+  (verbose > 0) && @info log_row([iter, fₖ, ∇fNorm2, Δ, ρₖ, "initial point"])
 
   # stop condition
   absolute(n, gₖ, ϵ) = norm(gₖ, 2) > ϵ
@@ -137,14 +130,7 @@ function partitionedTrunk(
     (ρₖ >= η₁ && norm(sₖ, 2) >= 0.8 * Δ) ? Δ = ϕ * Δ : Δ = Δ
     (ρₖ <= η) && (Δ = 1 / ϕ * Δ)
 
-    (verbose > 0) && @info log_row([
-      iter,
-      fₖ,
-      ∇fNorm2,
-      Δ,
-      ρₖ,
-      cg_res[2].status,
-    ])
+    (verbose > 0) && @info log_row([iter, fₖ, ∇fNorm2, Δ, ρₖ, cg_res[2].status])
   end
 
   Δt = time() - start_time
@@ -152,7 +138,7 @@ function partitionedTrunk(
   g = evaluate_grad_part_data(part_data, x)
   nrm_grad = norm(g, 2)
 
-  if !absolute(n, g, ϵ)|| !relative(n, g, ϵ, ∇f₀Norm2)
+  if !absolute(n, g, ϵ) || !relative(n, g, ϵ, ∇f₀Norm2)
     status = :first_order
     # println("stationnary point ✅")
   elseif !_max_iter(iter, max_iter)
