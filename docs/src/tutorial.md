@@ -21,7 +21,7 @@ B = \sum_{i=1}^N U_i^\top B_{i} U_i,
 ```
 where each $B_{i} \approx \nabla^2 f_i$ has size $n_i \times n_i$.
 
-The usual quasi-Newton updates, such as SR1, BFGS, or their limited-memory variants LSR1 or LBFGS approximate $\nabla^2 f(x)\approx B$ by low rank updates producing inevitably dense approximations.
+The usual quasi-Newton updates, such as SR1, BFGS, or their limited-memory variants LSR1 or LBFGS, approximate $\nabla^2 f(x)\approx B$ by low rank updates, which inevitably result in dense approximations.
 By relying on element Hessian approximations $B_i$, updated at each iteration, the partitioned updates respect the Hessian sparsity structure and perform updates of rank $\min(\lambda N,n), \; \lambda = 1,2$ depending on the update applied to $B_i$.
 
 See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) to get more details about partitioned quasi-Newton approximations and how they compare with standard updates.
