@@ -52,7 +52,7 @@ model = ADNLPModel(f, ones(10))
 You minimize your model by calling the partitioned-update solver `PTRUNK`:
 ```@example PSSolver
 using PartiallySeparableSolvers
-stats = PTRUNK(model)
+stats = PTRUNK(model; verbose=1)
 print(stats)
 ```
 
@@ -67,7 +67,9 @@ Allowed values include:
 
 Thus for example,
 ```@example PSSolver
-stats = PTRUNK(mathopt_model; name=:pbfgs)
+stats = PTRUNK(model; name=:pbfgs, verbose=1)
 print(stats)
+```
+updates each element Hessian approximation with BFGS.
 
 See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) for more details about partitioned quasi-Newton approximations.

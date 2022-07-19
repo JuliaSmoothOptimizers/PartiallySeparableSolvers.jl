@@ -2,7 +2,7 @@ module ModTrustRegionPartitionedData
 
 using ExpressionTreeForge, PartitionedStructures, PartiallySeparableNLPModels
 using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
-using Printf, SolverCore
+using Printf, SolverCore, SolverTools
 
 export partitionedTrunk
 
@@ -51,25 +51,32 @@ function partitionedTrunk(
   ϕ::Float64 = 2.0,
   name = part_data.name,
   name_method::String = "Trust-region " * String(name),
-  verbose=false,
+  verbose::Int=0,
   verbose_part_update=false,
   kwargs...,
 )
   x = copy(x₀)
   ∇f₀ = evaluate_grad_part_data(part_data, x₀)
-  ∇fNorm2 = norm(∇f₀, 2)
+  ∇f₀Norm2 = norm(∇f₀, 2)
 
   cpt = Counter(0, 0, 0)
-  println("Start: " * name_method)
+  verbose>0 && println("Start: " * name_method)
 
   iter = 0 # ≈ k
   gₖ = copy(∇f₀)
+  ∇fNorm2 = ∇f₀Norm2
   gtmp = similar(gₖ)
   sₖ = similar(x)
 
   fₖ = evaluate_obj_part_data(part_data, x)
 
-  verbose && (@printf " iter time  fₖ      norm(gₖ)  Δ\n")
+  verbose > 0 && @info log_header(
+    [:iter, :f, :dual, :radius, :ratio, :cgstatus],
+    [Int, T, T, T, T, Int, String],
+    hdr_override = Dict(:f => "f(x)", :dual => "π", :radius => "Δ"),
+  )
+
+  # verbose && (@printf " iter time  fₖ      norm(gₖ)  Δ\n")
 
   cgtol = one(T)  # Must be ≤ 1.
   cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
@@ -84,15 +91,25 @@ function partitionedTrunk(
     ((res, v) -> PartiallySeparableNLPModels.product_part_data_x!(res, part_data, v)),
   )
 
+  (verbose > 0) && @info log_row([
+    iter,
+    fₖ,
+    ∇fNorm2,
+    Δ,
+    ρₖ,
+    "initial point",
+  ])
+
   # stop condition
   absolute(n, gₖ, ϵ) = norm(gₖ, 2) > ϵ
-  relative(n, gₖ, ϵ, ∇fNorm2) = norm(gₖ, 2) > ϵ * ∇fNorm2
+  relative(n, gₖ, ϵ, ∇f₀Norm2) = norm(gₖ, 2) > ϵ * ∇fNorm2
   _max_iter(iter, max_iter) = iter < max_iter
   _max_time(start_time) = (time() - start_time) < max_time
   while absolute(n, gₖ, ϵ) &&
           relative(n, gₖ, ϵ, ∇fNorm2) &&
           _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
-    verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
+    # verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
+
     iter += 1
     cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
     sₖ .= cg_res[1] # the step deduce by cg
@@ -107,39 +124,46 @@ function partitionedTrunk(
         part_data,
         sₖ;
         name = part_data.name,
-        verbose = verbose_part_update,
+        verbose = (verbose > 1),
       )
-      gₖ .= PartitionedStructures.get_v(get_pg(part_data))
-      build_v!(get_pg(part_data))
+      gₖ .= PartitionedStructures.get_v(get_pg(part_data)) # already build by update_nlp!
       increase_grad!(cpt)
-      verbose && (@printf "✅\n")
+      ∇fNorm2 = norm(gₖ, 2)
+
     else
       fₖ = fₖ
-      verbose && (@printf "❌\n")
     end
     # trust region update
     (ρₖ >= η₁ && norm(sₖ, 2) >= 0.8 * Δ) ? Δ = ϕ * Δ : Δ = Δ
     (ρₖ <= η) && (Δ = 1 / ϕ * Δ)
+
+    (verbose > 0) && @info log_row([
+      iter,
+      fₖ,
+      ∇fNorm2,
+      Δ,
+      ρₖ,
+      cg_res[2].status,
+    ])
   end
-  verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
 
   Δt = time() - start_time
   f = evaluate_obj_part_data(part_data, x)
   g = evaluate_grad_part_data(part_data, x)
   nrm_grad = norm(g, 2)
 
-  if !absolute(n, g, ϵ)|| !relative(n, g, ϵ, ∇fNorm2)
+  if !absolute(n, g, ϵ)|| !relative(n, g, ϵ, ∇f₀Norm2)
     status = :first_order
-    println("stationnary point ✅")
+    # println("stationnary point ✅")
   elseif !_max_iter(iter, max_iter)
     status = :max_eval
-    println("Max eval ❌")
+    # println("Max eval ❌")
   elseif !_max_time(start_time)
     status = :max_time
-    println("Max time ❌")
+    # println("Max time ❌")
   else
     status = :unknown
-    println("Unknown ❌")
+    # println("Unknown ❌")
   end
 
   nlp.counters.neval_obj = cpt.neval_obj
@@ -156,98 +180,6 @@ function partitionedTrunk(
     elapsed_time = Δt,
   )
   return stats
-end
-
-"""
-    (x, iter) = partitionedTrunkCore(part_data::PartiallySeparableNLPModels.PartitionedData; x::AbstractVector = copy(get_x(part_data)), n::Int = get_n(part_data), max_eval::Int = 10000, max_iter::Int = 10000, max_time::Float64 = 30.0, atol::Real = √eps(eltype(x)), rtol::Real = √eps(eltype(x)), start_time::Float64 = time(), η::Float64 = 1e-3, η₁::Float64 = 0.75, # > η Δ::Float64 = 1.0, ϵ::Float64 = 1e-6, ϕ::Float64 = 2.0, ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x), cpt::Counter = Counter(0, 0, 0), iter_print::Int64 = Int(floor(max_iter / 100)), T = eltype(x), verbose = true, kwargs...)
-
-Partitioned quasi-Newton trust-region method apply on the partitioned structures of `part_data`.
-The method return the point `x` and the number of `iter`ations performed before it reaches the stopping criterias.
-"""
-function partitionedTrunkCore(
-  part_data::PartiallySeparableNLPModels.PartitionedData;
-  x::AbstractVector = copy(get_x(part_data)),
-  n::Int = get_n(part_data),
-  max_eval::Int = 10000,
-  max_iter::Int = 10000,
-  max_time::Float64 = 30.0,
-  atol::Real = √eps(eltype(x)),
-  rtol::Real = √eps(eltype(x)),
-  start_time::Float64 = time(),
-  η::Float64 = 1e-3,
-  η₁::Float64 = 0.75, # > η
-  Δ::Float64 = 1.0,
-  ϵ::Float64 = 1e-6,
-  ϕ::Float64 = 2.0,
-  ∇f₀::AbstractVector = PartiallySeparableNLPModels.evaluate_grad_part_data(part_data, x),
-  cpt::Counter = Counter(0, 0, 0),
-  iter_print::Int64 = Int(floor(max_iter / 100)),
-  T = eltype(x),
-  verbose = false,
-  kwargs...,
-)
-  iter = 0 # ≈ k
-  gₖ = copy(∇f₀)
-  gtmp = similar(gₖ)
-  ∇fNorm2 = norm(∇f₀, 2)
-  sₖ = similar(x)
-
-  fₖ = evaluate_obj_part_data(part_data, x)
-
-  verbose && (@printf " iter time  fₖ      norm(gₖ)  Δ\n")
-
-  cgtol = one(T)  # Must be ≤ 1.
-  cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
-
-  ρₖ = -1
-  B = LinearOperators.LinearOperator(
-    T,
-    n,
-    n,
-    true,
-    true,
-    ((res, v) -> PartiallySeparableNLPModels.product_part_data_x!(res, part_data, v)),
-  )
-
-  # stop condition
-  absolute(n, gₖ, ϵ) = norm(gₖ, 2) > ϵ
-  relative(n, gₖ, ϵ, ∇fNorm2) = norm(gₖ, 2) > ϵ * ∇fNorm2
-  _max_iter(iter, max_iter) = iter < max_iter
-  _max_time(start_time) = (time() - start_time) < max_time
-  while absolute(n, gₖ, ϵ) &&
-          relative(n, gₖ, ϵ, ∇fNorm2) &&
-          _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
-    verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
-    iter += 1
-    cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
-    sₖ .= cg_res[1] # the step deduce by cg
-
-    (ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt = cpt) # compute pk
-
-    if ρₖ > η
-      x .= x .+ sₖ
-      fₖ = fₖ₊₁
-      gtmp .= gₖ
-      PartiallySeparableNLPModels.update_nlp!(
-        part_data,
-        sₖ;
-        name = part_data.name,
-        verbose = false,
-      )
-      gₖ .= PartitionedStructures.get_v(get_pg(part_data))
-      build_v!(get_pg(part_data))
-      increase_grad!(cpt)
-      verbose && (@printf "✅\n")
-    else
-      fₖ = fₖ
-      verbose && (@printf "❌\n")
-    end
-    # trust region update
-    (ρₖ >= η₁ && norm(sₖ, 2) >= 0.8 * Δ) ? Δ = ϕ * Δ : Δ = Δ
-    (ρₖ <= η) && (Δ = 1 / ϕ * Δ)
-  end
-  verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
-  return (x, iter)
 end
 
 """

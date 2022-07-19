@@ -18,6 +18,7 @@ PartiallySeparableNLPModels = "7f79d04d-aed5-44bf-a878-92b5ccf934e0"
 PartitionedStructures = "a6683cb1-4e99-4d03-b5b5-b79ed0acabcf"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SolverCore = "ff4d7338-4cf1-434d-91df-b86cb86fb843"
+SolverTools = "b5612192-2639-5dc1-abfe-fbedd65fab29"
 
 [compat]
 ADNLPModels = "0.3.1"
@@ -32,6 +33,7 @@ NLPModelsJuMP = "0.8.3"
 PartiallySeparableNLPModels = "0.1.0"
 PartitionedStructures = "0.1.0"
 SolverCore = "0.2.2"
+SolverTools = "0.8.0"
 julia = "^1.6.0"
 
 [extras]
