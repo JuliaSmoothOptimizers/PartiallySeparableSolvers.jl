@@ -32,7 +32,7 @@ Some of these partitioned quasi-Newton methods are detailed in the reference bel
 
 
 ## Running a partitioned quasi-Newton solver
-For now, PartiallySeparableSolvers.jl supports [ADNLPModel](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl)s, which are defined by pure julia code, or [MathOptNLPModel](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl)s based on [JuMP](https://github.com/jump-dev/JuMP.jl) models.
+For now, PartiallySeparableSolvers.jl supports [ADNLPModel](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl)s, which are defined by pure julia code, or [MathOptNLPModel](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl)s, which are based on [JuMP](https://github.com/jump-dev/JuMP.jl) models.
 Regardless of which model is used, the solver returns a [`GenericExecutionStats`](https://juliasmoothoptimizers.github.io/SolverCore.jl/dev/reference/#SolverCore.GenericExecutionStats).
 
 ### An `ADNLPModel`
