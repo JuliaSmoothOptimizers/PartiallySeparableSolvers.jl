@@ -69,6 +69,5 @@ Thus for example,
 ```@example PSSolver
 stats = PTRUNK(mathopt_model; name=:pbfgs)
 print(stats)
-```
 
 See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) for more details about partitioned quasi-Newton approximations.
