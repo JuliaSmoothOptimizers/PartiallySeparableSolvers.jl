@@ -26,6 +26,7 @@ By relying on element Hessian approximations $B_i$ updated at each iteration, th
 
 See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/PartitionedStructures.jl/dev/tutorial/) for more details about partitioned quasi-Newton approximations and how they compare with standard updates.
 Some of these partitioned quasi-Newton methods are detailed in the reference below, and some are new (see PartitionedStructures.jl).
+
 #### Reference
 * A. Griewank and P. Toint, [*Partitioned variable metric updates for large structured optimization problems*](https://link.springer.com/article/10.1007/BF01399316), Numerische Mathematik volume, 39, pp. 119--137, 1982.
 
