@@ -19,7 +19,7 @@
 
 
 ## Philosophy
-PartiallySeparableSolvers.jl define partitioned quasi-Newton trust-region solvers for unconstrained `ADNLPModel` or `MathOptNLPModel`.
+PartiallySeparableSolvers.jl implements a partitioned quasi-Newton trust-region solvers for unconstrained optimization.
 
 ## Compatibility
 Julia ≥ 1.6.
