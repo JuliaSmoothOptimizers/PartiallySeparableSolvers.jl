@@ -40,7 +40,7 @@ Let's first define the function that we seek to minimize and wrap it into an `AD
 ```@example PSSolver
 using ADNLPModels
 
-function example(x)
+function f(x)
   n = length(x)
   n < 2 && @error("length of x must be >= 2")
   return sum((x[j] + x[j+1])^2 for j=1:n-1)
