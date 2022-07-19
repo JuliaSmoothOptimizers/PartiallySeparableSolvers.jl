@@ -28,7 +28,7 @@ See [PartitionedStructures.jl tutorial](https://JuliaSmoothOptimizers.github.io/
 Some of these partitioned quasi-Newton methods are detailed in the reference below, and some are new (see PartitionedStructures.jl).
 
 #### Reference
-* A. Griewank and P. Toint, [*Partitioned variable metric updates for large structured optimization problems*](https://link.springer.com/article/10.1007/BF01399316), Numerische Mathematik volume, 39, pp. 119--137, 1982.
+* A. Griewank and Ph. L. Toint, [*Partitioned variable metric updates for large structured optimization problems*](https://link.springer.com/article/10.1007/BF01399316), Numerische Mathematik volume, 39, pp. 119--137, 1982.
 
 
 ## Running a partitioned quasi-Newton solver
