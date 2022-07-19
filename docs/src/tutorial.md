@@ -45,11 +45,7 @@ function example(x)
   n < 2 && @error("length of x must be >= 2")
   return sum((x[j] + x[j+1])^2 for j=1:n-1)
 end 
-start_example(n :: Int) = ones(n)
-example_ADNLPModel(n :: Int=100) = ADNLPModel(example, start_example(n), name="Example " * string(n) * " variables")
-
-n = 10 # size of the problem
-adnlp_model = example_ADNLPModel(n)
+model = ADNLPModel(f, ones(10))
 ```
 
 ### Running the partitioned quasi-Newton trust-region method
