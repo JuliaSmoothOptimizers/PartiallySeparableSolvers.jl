@@ -52,7 +52,7 @@ model = ADNLPModel(f, ones(10))
 You minimize your model by calling the partitioned-update solver `PTRUNK`:
 ```@example PSSolver
 using PartiallySeparableSolvers
-stats = PTRUNK(adnlp_model)
+stats = PTRUNK(model)
 print(stats)
 ```
 
