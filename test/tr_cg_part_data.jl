@@ -9,6 +9,7 @@
   ges_psr1 = PTRUNK(nlp; name = :psr1)
   ges_pse = PTRUNK(nlp; name = :pse)
   ges_pbfgs = PTRUNK(nlp; name = :pbfgs)
+  ges_pcs = PTRUNK(nlp; name = :pcs)
 
   @test ges_plbfgs.status == :first_order
   @test ges_plbfgs_damped.status == :first_order
@@ -17,4 +18,5 @@
   @test ges_psr1.status == :first_order
   @test ges_pse.status == :first_order
   @test ges_pbfgs.status == :first_order
+  @test ges_pcs.status == :first_order
 end
