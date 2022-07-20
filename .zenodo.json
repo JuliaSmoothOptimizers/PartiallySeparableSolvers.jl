@@ -13,7 +13,7 @@
   "related_identifiers": [
     {
       "scheme": "url",
-      "identifier": "https://github.com/paraynaud/PartiallySeparableSolvers.jl/releases/latest",
+      "identifier": "https://github.com/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl/releases/latest",
       "relation": "isSupplementTo"
     }
   ]

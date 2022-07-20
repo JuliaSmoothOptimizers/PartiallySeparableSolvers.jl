@@ -101,7 +101,6 @@ function partitionedTrunk(
   while absolute(n, gₖ, ϵ) &&
           relative(n, gₖ, ϵ, ∇fNorm2) &&
           _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
-    # verbose && (@printf "%3d %5.1f   %6.1e %7.1e %6.1e \t " iter (time() - start_time) fₖ norm(gₖ, 2) Δ)
 
     iter += 1
     cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
@@ -140,16 +139,12 @@ function partitionedTrunk(
 
   if !absolute(n, g, ϵ) || !relative(n, g, ϵ, ∇f₀Norm2)
     status = :first_order
-    # println("stationnary point ✅")
   elseif !_max_iter(iter, max_iter)
     status = :max_eval
-    # println("Max eval ❌")
   elseif !_max_time(start_time)
     status = :max_time
-    # println("Max time ❌")
   else
     status = :unknown
-    # println("Unknown ❌")
   end
 
   nlp.counters.neval_obj = cpt.neval_obj
