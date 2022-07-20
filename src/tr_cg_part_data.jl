@@ -101,7 +101,6 @@ function partitionedTrunk(
   while absolute(n, gₖ, ϵ) &&
           relative(n, gₖ, ϵ, ∇fNorm2) &&
           _max_iter(iter, max_iter) & _max_time(start_time) # stop condition
-
     iter += 1
     cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
     sₖ .= cg_res[1] # the step deduce by cg
