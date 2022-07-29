@@ -14,9 +14,12 @@
 [build-cirrus-url]: https://cirrus-ci.com/github/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl
 [codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl/branch/master/graph/badge.svg
 [codecov-url]: https://app.codecov.io/gh/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl
-[doi-img]: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.822073-blue.svg
-[doi-url]: https://doi.org/10.5281/zenodo.822073
+[doi-img]: https://zenodo.org/badge/267339899.svg
+[doi-url]: https://zenodo.org/badge/latestdoi/267339899
 
+## How to cite
+
+If you use PartiallySeparableSolvers.jl in your work, please cite using the format given in [CITATION.bib](CITATION.bib).
 
 ## Philosophy
 PartiallySeparableSolvers.jl implements a partitioned quasi-Newton trust-region solvers for unconstrained optimization.
