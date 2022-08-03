@@ -68,7 +68,10 @@ function partitionedTrunk(
   gtmp = similar(gₖ)
   sₖ = similar(x)
 
-  fₖ = evaluate_obj_part_data(part_data, x)
+  f(x::AbstractVector) = NLPModels.obj(nlp, x)
+
+  # fₖ = evaluate_obj_part_data(part_data, x)
+  fₖ = f(x)
 
   verbose > 0 && @info log_header(
     [:iter, :f, :dual, :radius, :ratio, :cgstatus],
@@ -82,14 +85,8 @@ function partitionedTrunk(
   cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
 
   ρₖ = -1
-  B = LinearOperators.LinearOperator(
-    T,
-    n,
-    n,
-    true,
-    true,
-    ((res, v) -> PartiallySeparableNLPModels.product_part_data_x!(res, part_data, v)),
-  )
+
+  B = LinearOperators.LinearOperator(part_data)
 
   (verbose > 0) && @info log_row([iter, fₖ, ∇fNorm2, Δ, ρₖ, "initial point"])
 
@@ -105,7 +102,7 @@ function partitionedTrunk(
     cg_res = Krylov.cg(B, -gₖ, atol = T(atol), rtol = cgtol, radius = T(Δ), itmax = max(2 * n, 50))
     sₖ .= cg_res[1] # the step deduce by cg
 
-    (ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ; cpt = cpt) # compute pk
+    (ρₖ, fₖ₊₁) = compute_ratio(x, fₖ, sₖ, part_data, B, gₖ, f; cpt = cpt) # compute pk
 
     if ρₖ > η
       x .= x .+ sₖ
@@ -174,11 +171,12 @@ function compute_ratio(
   sₖ::Vector{T},
   part_data::PartiallySeparableNLPModels.PartitionedData,
   B::AbstractLinearOperator{T},
-  gₖ::AbstractVector{T};
+  gₖ::AbstractVector{T},
+  f::Function;
   cpt::Counter = Counter(0, 0, 0),
 ) where {T <: Number}
   mₖ₊₁ = fₖ + dot(gₖ, sₖ) + 1 / 2 * (dot((B * sₖ), sₖ))
-  fₖ₊₁ = evaluate_obj_part_data(part_data, x + sₖ) # the evaluation set partdata.x to x+sₖ
+  fₖ₊₁ = f(x + sₖ) # the evaluation set partdata.x to x+sₖ
   set_x!(part_data, x) # set x to its real value, mandatoy for the computation of y
   increase_obj!(cpt)
   ρₖ = (fₖ - fₖ₊₁) / (fₖ - mₖ₊₁)

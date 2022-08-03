@@ -15,27 +15,21 @@
   x0 = create_initial_point_Rosenbrock(n)
 
   @testset "MathOptNLPModel" begin
-    ex_, n_, x0_ = get_expr_tree(ros_mnlp)
-    @test ex_ == ex_mathopt
-    @test n_ == n
-    @test x0_ == x0
+    ex_ = get_expression_tree(ros_mnlp)
+    @test ex_ == ex_mathopt    
   end
 
   @testset "ADNLPModel" begin
-    ex_, n_, x0_ = get_expr_tree(ros_adnlp)
-    @test ex_ == ex_ad
-    @test n_ == n
-    @test x0_ == x0
+    ex_ = get_expression_tree(ros_adnlp)
+    @test ex_ == ex_ad    
   end
 
   @testset "ADNLPModel/MathOptNLPModel" begin
-    ex_1, n_1, x0_1 = get_expr_tree(ros_mnlp)
-    ex_2, n_2, x0_2 = get_expr_tree(ros_adnlp)
+    ex_1 = get_expression_tree(ros_mnlp)
+    ex_2 = get_expression_tree(ros_adnlp)
 
     @test ExpressionTreeForge.evaluate_expr_tree(ex_2, x0) ==
           ExpressionTreeForge.evaluate_expr_tree(ex_1, x0)
-    @test n_1 == n_2
-    @test x0_1 == x0_2
 
     pd_pbfgs1 = build_PartitionedDataTRPQN(ex_1, n; x0)
     pd_pbfgs2 = build_PartitionedDataTRPQN(ex_2, n; x0)
