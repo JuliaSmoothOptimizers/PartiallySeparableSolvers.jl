@@ -4,8 +4,6 @@ using LinearAlgebra, Printf
 using ExpressionTreeForge, PartiallySeparableNLPModels, PartitionedStructures
 using Krylov, LinearOperators
 using NLPModels, ADNLPModels, NLPModelsJuMP
-using JuMP, MathOptInterface
-using ModelingToolkit
 using SolverCore
 
 export PTRUNK # Partitioned update solver

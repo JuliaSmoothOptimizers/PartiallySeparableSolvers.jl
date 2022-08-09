@@ -1,15 +1,12 @@
 using PartiallySeparableSolvers
 
 using Test, LinearAlgebra
-using ExpressionTreeForge, PartiallySeparableNLPModels, PartitionedStructures
-using JuMP, MathOptInterface
+using ExpressionTreeForge, PartiallySeparableNLPModels
 using ADNLPModels, NLPModels, NLPModelsJuMP
-using OptimizationProblems, OptimizationProblems.ADNLPProblems
-using ModelingToolkit
+using OptimizationProblems, OptimizationProblems.ADNLPProblems, OptimizationProblems.PureJuMP
 
 using PartiallySeparableSolvers.ModPartitionedMethods
 
-include("models.jl")
 include("pss.jl")
 include("partitioned_methods.jl")
 include("tr_cg_part_data.jl")
