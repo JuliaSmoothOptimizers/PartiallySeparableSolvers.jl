@@ -25,7 +25,7 @@ Variants with linear-operator element-Hessian approximations:
 * PLSE with `name=:plse`, by default, every element-Hessian approximations is a LBFGS operator as long as the curvature condition holds, otherwise it becomes a LSR1 operator.
 """
 function PTRUNK(nlp::AbstractNLPModel; name = :plse, kwargs...)
-  x0 = nlp.meta.x0 
+  x0 = nlp.meta.x0
   n = nlp.meta.nvar
   ex = ExpressionTreeForge.get_expression_tree(nlp)
   part_data_pqn = build_PartitionedDataTRPQN(ex, n; name = name, x0 = x0)
