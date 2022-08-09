@@ -1,7 +1,7 @@
 @testset "instantiation new version" begin
   n = 10
-  adnlp = ADNLPProblems.arwhead(;n)
-  monlp = MathOptNLPModel(PureJuMP.arwhead(;n))
+  adnlp = ADNLPProblems.arwhead(; n)
+  monlp = MathOptNLPModel(PureJuMP.arwhead(; n))
 
   x0 = monlp.meta.x0
 
