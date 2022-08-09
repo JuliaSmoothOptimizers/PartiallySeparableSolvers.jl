@@ -126,7 +126,7 @@ function partitionedTrunk(
   end
 
   Δt = time() - start_time
-  f = evaluate_obj_part_data(part_data, x)
+  f = f(x)
   g = evaluate_grad_part_data(part_data, x)
   nrm_grad = norm(g, 2)
 
