@@ -1,5 +1,5 @@
 module ModPartitionedMethods
-using JuMP, MathOptInterface, ModelingToolkit
+
 using ADNLPModels, NLPModels, NLPModelsJuMP
 using ExpressionTreeForge, PartiallySeparableNLPModels
 using ..ModTrustRegionPartitionedData

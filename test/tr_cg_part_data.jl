@@ -1,6 +1,6 @@
 @testset "PTRUNK Arwhead" begin
   n = 10
-  nlp = arwhead(; n)
+  nlp = ADNLPProblems.arwhead(; n)
 
   ges_plbfgs = PTRUNK(nlp; name = :plbfgs)
   ges_plbfgs_damped = PTRUNK(nlp; name = :plbfgs, damped = true)

@@ -70,7 +70,6 @@ function partitionedTrunk(
 
   f(x::AbstractVector) = NLPModels.obj(nlp, x)
 
-  # fₖ = evaluate_obj_part_data(part_data, x)
   fₖ = f(x)
 
   verbose > 0 && @info log_header(
@@ -78,8 +77,6 @@ function partitionedTrunk(
     [Int, T, T, T, T, Int, String],
     hdr_override = Dict(:f => "f(x)", :dual => "π", :radius => "Δ"),
   )
-
-  # verbose && (@printf " iter time  fₖ      norm(gₖ)  Δ\n")
 
   cgtol = one(T)  # Must be ≤ 1.
   cgtol = max(rtol, min(T(0.1), 9 * cgtol / 10, sqrt(∇fNorm2)))
