@@ -1,7 +1,7 @@
 name = "PartiallySeparableSolvers"
 uuid = "ee47c953-e16d-47b3-8c84-b49e0fa97f8a"
 authors = ["raynaudp "]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ADNLPModels = "54578032-b7ea-4c30-94aa-7cbd1cce6c9a"
