@@ -37,4 +37,4 @@ pkg> test PartiallySeparableSolvers
 See the [tutorial](https://JuliaSmoothOptimizers.github.io/PartiallySeparableSolvers.jl/dev/tutorial/).
 
 ## Dependencies
-The module uses [PartiallySeparableNLPModels.jl](https://github.com/JuliaSmoothOptimizers/PartiallySeparableNLPModels.jl) to detect the partially-separable structure and allocate related partitioned structures to perform partitioned quasi-Newton methods.
+The module uses [PartiallySeparableNLPModels.jl](https://github.com/JuliaSmoothOptimizers/PartiallySeparableNLPModels.jl) to detect the partially-separable structure and allocate related partitioned structures to perform partitioned quasi-Newton updates.
