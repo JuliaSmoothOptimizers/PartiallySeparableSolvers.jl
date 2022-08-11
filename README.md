@@ -29,7 +29,7 @@ Julia ≥ 1.6.
 
 ## How to install
 ```
-pkg> add https://github.com/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl
+pkg> add PartiallySeparableSolvers
 pkg> test PartiallySeparableSolvers
 ```
 
@@ -37,4 +37,4 @@ pkg> test PartiallySeparableSolvers
 See the [tutorial](https://JuliaSmoothOptimizers.github.io/PartiallySeparableSolvers.jl/dev/tutorial/).
 
 ## Dependencies
-The module uses [PartiallySeparableNLPModels.jl](https://github.com/JuliaSmoothOptimizers/PartiallySeparableNLPModels.jl) to detect the partially-separable structure and the structure required for partitioned quasi-Newton approximations.
+The module uses [PartiallySeparableNLPModels.jl](https://github.com/JuliaSmoothOptimizers/PartiallySeparableNLPModels.jl) to detect the partially-separable structure and allocate related partitioned structures to perform partitioned quasi-Newton methods.
