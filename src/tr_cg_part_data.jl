@@ -1,7 +1,6 @@
 module ModTrustRegionPartitionedData
 
 using ExpressionTreeForge, PartitionedStructures
-# , PartiallySeparableNLPModels
 using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
 using Printf, SolverCore, SolverTools
 using ..Mod_ab_partitioned_data, ..Mod_PQN

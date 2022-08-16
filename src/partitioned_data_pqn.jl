@@ -6,7 +6,6 @@ using PartitionedStructures, ExpressionTreeForge
 using LinearOperators, LinearAlgebra
 using NLPModels # for show
 using Printf # for show
-# using ..PartiallySeparableNLPModels.Mod_ab_partitioned_data,
 using ..PartiallySeparableNLPModels.Mod_common
 using ..ExpressionTreeForge.M_implementation_convexity_type
 
