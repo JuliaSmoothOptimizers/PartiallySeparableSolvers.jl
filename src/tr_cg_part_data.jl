@@ -1,8 +1,10 @@
 module ModTrustRegionPartitionedData
 
-using ExpressionTreeForge, PartitionedStructures, PartiallySeparableNLPModels
+using ExpressionTreeForge, PartitionedStructures
+# , PartiallySeparableNLPModels
 using LinearAlgebra, LinearAlgebra.BLAS, LinearOperators, NLPModels, Krylov
 using Printf, SolverCore, SolverTools
+using ..Mod_ab_partitioned_data, ..Mod_PQN
 
 export partitionedTrunk
 
@@ -26,7 +28,7 @@ increase_grad!(c::Counter) = c.neval_grad += 1
 increase_Hv(c::Counter) = c.neval_Hprod += 1
 
 """
-    stats = partitionedTrunk(nlp::AbstractNLPModel, part_data::PartiallySeparableNLPModels.PartitionedData; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs...)
+    stats = partitionedTrunk(nlp::AbstractNLPModel, part_data::PartitionedData; max_eval::Int = 10000, max_iter::Int = 10000, start_time::Float64 = time(), max_time::Float64 = 30.0, ϵ::Float64 = 1e-6, name = part_data.name, name_method::String = "Trust-region " * String(name), kwargs...)
 
 Produce a `GenericExecutionStats` for a partitioned quasi-Newton trust-region method.
 It requires the partitioned structures of `part_data::PartitionedDate` paired with an `nlp` model.
@@ -34,7 +36,7 @@ The counter `nlp.counters` are updated with the informations of `ModTrustRegionP
 """
 function partitionedTrunk(
   nlp::AbstractNLPModel,
-  part_data::PartiallySeparableNLPModels.PartitionedData;
+  part_data::PartitionedData;
   x₀ = get_x(part_data),
   T = eltype(x₀),
   n = get_n(part_data),
@@ -105,7 +107,7 @@ function partitionedTrunk(
       x .= x .+ sₖ
       fₖ = fₖ₊₁
       gtmp .= gₖ
-      PartiallySeparableNLPModels.update_nlp!(
+      update_nlp!(
         part_data,
         sₖ;
         name = part_data.name,
@@ -157,7 +159,7 @@ function partitionedTrunk(
 end
 
 """
-    ρₖ = compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::PartiallySeparableNLPModels.PartitionedData, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}; cpt::Counter = Counter(0, 0, 0))
+    ρₖ = compute_ratio(x::AbstractVector{T}, fₖ::T, sₖ::Vector{T}, part_data::PartitionedData, B::AbstractLinearOperator{T}, gₖ::AbstractVector{T}; cpt::Counter = Counter(0, 0, 0))
 
 Compute the ratio between the actual loss and the expected loss using `part_data`, the current point `x` and the step `s`.
 `g_k` must be the gradient at `x` and `B` the linear-operator paired to `part_data`.
@@ -166,7 +168,7 @@ function compute_ratio(
   x::AbstractVector{T},
   fₖ::T,
   sₖ::Vector{T},
-  part_data::PartiallySeparableNLPModels.PartitionedData,
+  part_data::PartitionedData,
   B::AbstractLinearOperator{T},
   gₖ::AbstractVector{T},
   f::Function;
