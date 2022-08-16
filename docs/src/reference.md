@@ -13,5 +13,5 @@ Pages = ["reference.md"]
 ```
 ​
 ```@autodocs
-Modules = [PartiallySeparableSolvers, ModPartitionedMethods, ModTrustRegionPartitionedData]
+Modules = [PartiallySeparableSolvers, ModPartitionedMethods, ModTrustRegionPartitionedData, Mod_PQN, Mod_ab_partitioned_data]
 ```
