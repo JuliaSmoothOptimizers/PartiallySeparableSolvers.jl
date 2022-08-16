@@ -1,8 +1,10 @@
 module ModPartitionedMethods
 
 using ADNLPModels, NLPModels, NLPModelsJuMP
-using ExpressionTreeForge, PartiallySeparableNLPModels
+using ExpressionTreeForge 
+# PartiallySeparableNLPModels
 using ..ModTrustRegionPartitionedData
+using ..Mod_PQN
 
 export PTRUNK
 
