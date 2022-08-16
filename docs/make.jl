@@ -2,10 +2,12 @@ using Documenter
 using PartiallySeparableSolvers
 
 using PartiallySeparableSolvers.ModPartitionedMethods,
-  PartiallySeparableSolvers.ModTrustRegionPartitionedData
+  PartiallySeparableSolvers.ModTrustRegionPartitionedData,
+  PartiallySeparableSolvers.Mod_PQN,
+  PartiallySeparableSolvers.Mod_ab_partitioned_data
 
 makedocs(
-  modules = [PartiallySeparableSolvers, ModPartitionedMethods, ModTrustRegionPartitionedData],
+  modules = [PartiallySeparableSolvers, ModPartitionedMethods, ModTrustRegionPartitionedData, Mod_PQN, Mod_ab_partitioned_data],
   doctest = true,
   # linkcheck = true,
   strict = true,
