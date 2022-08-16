@@ -11,6 +11,9 @@ using PartiallySeparableSolvers.Mod_PQN
 
   ps_data = build_PartitionedDataTRPQN(obj, n; x0 = x)
 
+  res = show(ps_data)
+  @test res == nothing
+
   objx = evaluate_obj_part_data(ps_data, x)
   @test objx == NLPModels.obj(adnlp, x)
 
@@ -23,10 +26,15 @@ using PartiallySeparableSolvers.Mod_PQN
   gy = evaluate_grad_part_data(ps_data, y)
   @test NLPModels.grad(adnlp, y) ≈ gy
 
-  Bk = Matrix(ps_data.pB)
-
   x = (x -> 2 * x).(ones(n))
   s = (x -> 0.1 * x).(ones(n))
+  
+  evaluate_y_part_data!(ps_data, x, s)
+
+  v = ones(n)
+  hprod(ps_data, x, v)
+
+  Bk = Matrix(ps_data.pB)
 
   update_nlp!(ps_data, x, s)
   Bk1 = Matrix(ps_data.pB)
