@@ -2,8 +2,8 @@ using PartiallySeparableSolvers.Mod_ab_partitioned_data
 using PartiallySeparableSolvers.Mod_PQN
 
 @testset "PQN structure" begin
-  n = 20
-  adnlp = ADNLPProblems.rosenbrock(; n)
+  n = 18
+  adnlp = ADNLPProblems.dixmaanh(;n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
@@ -15,13 +15,13 @@ using PartiallySeparableSolvers.Mod_PQN
   @test res == nothing
 
   objx = evaluate_obj_part_data(ps_data, x)
-  @test objx == NLPModels.obj(adnlp, x)
+  @test objx ≈ NLPModels.obj(adnlp, x)
 
   objy = evaluate_obj_part_data(ps_data, y)
   @test objy ≈ NLPModels.obj(adnlp, y)
 
   gx = evaluate_grad_part_data(ps_data, x)
-  @test NLPModels.grad(adnlp, x) == gx
+  @test NLPModels.grad(adnlp, x) ≈ gx
 
   gy = evaluate_grad_part_data(ps_data, y)
   @test NLPModels.grad(adnlp, y) ≈ gy
@@ -47,9 +47,9 @@ using PartiallySeparableSolvers.Mod_PQN
   @test res ≈ Bk1 * x
 end
 
-@testset "PartiallySeparableNLPModels, update_nlp!(part_data, x, s)" begin
-  n = 20
-  adnlp = ADNLPProblems.rosenbrock(; n)
+@testset "PartitionedDataTRPQN from ADNLPProblems, update_nlp!(part_data, x, s)" begin
+  n = 18
+  adnlp = ADNLPProblems.dixmaanh(;n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
@@ -85,10 +85,6 @@ end
   PartitionedStructures.build_v!(epv_y)
   y = PartitionedStructures.get_v(epv_y)
 
-  # epv_y_damped = ps_data_plbfgs_damped.py
-  # PartitionedStructures.build_v!(epv_y_damped)
-  # y_damped = PartitionedStructures.get_v(epv_y_damped)
-
   partitioned_matrix(nlp) = Matrix(nlp.pB)
 
   # in the case of the Rosenbrock equation, for the given x,s and induces y, every partitioned update ensure the secant equation.
@@ -102,9 +98,9 @@ end
   @test isapprox(norm(partitioned_matrix(ps_data_pcs) * s - y), 0, atol = 1e-10)
 end
 
-@testset "PartiallySeparableNLPModels, update_nlp!(part_data, s)" begin
-  n = 20
-  adnlp = ADNLPProblems.rosenbrock(; n)
+@testset "PartitionedDataTRPQN from PureJuMP, update_nlp!(part_data, s)" begin
+  n = 18
+  adnlp = PureJuMP.dixmaanh(;n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
@@ -154,7 +150,7 @@ end
 
 @testset "methods" begin
   n = 20
-  adnlp = ADNLPProblems.rosenbrock(; n)
+  adnlp = ADNLPProblems.arwhead(; n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
