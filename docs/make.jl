@@ -7,7 +7,13 @@ using PartiallySeparableSolvers.ModPartitionedMethods,
   PartiallySeparableSolvers.Mod_ab_partitioned_data
 
 makedocs(
-  modules = [PartiallySeparableSolvers, ModPartitionedMethods, ModTrustRegionPartitionedData, Mod_PQN, Mod_ab_partitioned_data],
+  modules = [
+    PartiallySeparableSolvers,
+    ModPartitionedMethods,
+    ModTrustRegionPartitionedData,
+    Mod_PQN,
+    Mod_ab_partitioned_data,
+  ],
   doctest = true,
   # linkcheck = true,
   strict = true,

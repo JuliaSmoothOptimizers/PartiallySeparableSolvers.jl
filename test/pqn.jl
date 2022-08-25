@@ -3,7 +3,7 @@ using PartiallySeparableSolvers.Mod_PQN
 
 @testset "PQN structure" begin
   n = 18
-  adnlp = ADNLPProblems.dixmaanh(;n)
+  adnlp = ADNLPProblems.dixmaanh(; n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
@@ -28,7 +28,7 @@ using PartiallySeparableSolvers.Mod_PQN
 
   x = (x -> 2 * x).(ones(n))
   s = (x -> 0.1 * x).(ones(n))
-  
+
   evaluate_y_part_data!(ps_data, x, s)
 
   v = ones(n)
@@ -49,7 +49,7 @@ end
 
 @testset "PartitionedDataTRPQN from ADNLPProblems, update_nlp!(part_data, x, s)" begin
   n = 18
-  adnlp = ADNLPProblems.dixmaanh(;n)
+  adnlp = ADNLPProblems.dixmaanh(; n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
@@ -100,7 +100,7 @@ end
 
 @testset "PartitionedDataTRPQN from PureJuMP, update_nlp!(part_data, s)" begin
   n = 18
-  adnlp = PureJuMP.dixmaanh(;n)
+  adnlp = PureJuMP.dixmaanh(; n)
   obj = ExpressionTreeForge.get_expression_tree(adnlp)
 
   x = (x -> 2 * x).(ones(n))
