@@ -106,12 +106,7 @@ function partitionedTrunk(
       x .= x .+ sₖ
       fₖ = fₖ₊₁
       gtmp .= gₖ
-      update_nlp!(
-        part_data,
-        sₖ;
-        name = part_data.name,
-        verbose = (verbose > 1),
-      )
+      update_nlp!(part_data, sₖ; name = part_data.name, verbose = (verbose > 1))
       gₖ .= PartitionedStructures.get_v(get_pg(part_data)) # already build by update_nlp!
       increase_grad!(cpt)
       ∇fNorm2 = norm(gₖ, 2)
