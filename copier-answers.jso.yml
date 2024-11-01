@@ -1,0 +1,8 @@
+PackageName: "PartiallySeparableSolvers"
+PackageOwner: "JuliaSmoothOptimizers"
+PackageUUID: "ee47c953-e16d-47b3-8c84-b49e0fa97f8a"
+_src_path: "https://github.com/JuliaSmoothOptimizers/JSOBestieTemplate.jl"
+_commit: "v0.13.0"
+AddBreakage: true
+AddBenchmark: false
+AddBenchmarkCI: true
