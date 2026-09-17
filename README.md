@@ -14,7 +14,7 @@
 [build-cirrus-url]: https://cirrus-ci.com/github/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl
 [codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl/branch/master/graph/badge.svg
 [codecov-url]: https://app.codecov.io/gh/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl
-[doi-img]: https://zenodo.org/badge/267339899.svg
+[doi-img]: https://zenodo.org/badge/DOI/10.5281/zenodo.6984386.svg
 [doi-url]: https://zenodo.org/badge/latestdoi/267339899
 
 ## How to cite
