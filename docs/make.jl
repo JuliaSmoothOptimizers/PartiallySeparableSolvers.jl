@@ -26,7 +26,7 @@ makedocs(
 )
 
 deploydocs(
-  repo = "github.com/paraynaud/PartiallySeparableSolvers.jl.git",
+  repo = "github.com/JuliaSmoothOptimizers/PartiallySeparableSolvers.jl.git",
   push_preview = true,
-  devbranch = "master",
+  devbranch = "main",
 )
